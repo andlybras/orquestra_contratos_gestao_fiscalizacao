@@ -141,18 +141,27 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Orquestra Contratos'),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
-        // Adicionamos um botão de ação na AppBar
         actions: [
+          // Botão para gerar o PDF (pré-visualização)
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'Gerar Relatório',
+            tooltip: 'Pré-visualizar Relatório PDF',
             onPressed: () {
-              // Mostra uma mensagem rápida para o usuário
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Gerando relatório...')),
+                const SnackBar(content: Text('Gerando pré-visualização do relatório...')),
               );
-              // Chama o serviço para gerar o PDF com a lista atual de contratos
               _reportService.gerarRelatorioPDF(_listaDeContratos);
+            },
+          ),
+          // NOVO BOTÃO para gerar o Dossiê ZIP
+          IconButton(
+            icon: const Icon(Icons.archive),
+            tooltip: 'Exportar Dossiê Completo (.zip)',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gerando Dossiê .zip...')),
+              );
+              _reportService.gerarDossieCompleto(_listaDeContratos);
             },
           ),
         ],
