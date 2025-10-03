@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_contract_screen.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/contract_detail_screen.dart';
+import 'package:orquestra_contratos_gestao_fiscalizacao/services/database_service.dart';
 
-// 1. Convertemos para StatefulWidget
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -11,35 +11,35 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 2. A lista de contratos agora faz parte do Estado, para que possa ser modificada.
-   // Usamos List<Map<String, dynamic>> para permitir diferentes tipos de dados.
-  final List<Map<String, dynamic>> _listaDeContratos = [
-    {
-      'numero': 'Contrato Nº 123/2025',
-      'objeto': 'Serviço de manutenção predial',
-      'status': 'Ativo',
-      // Cada contrato agora tem sua própria lista de ocorrências.
-      'ocorrencias': [
-        {
-          'titulo': 'Vistoria inicial',
-          'descricao': 'Tudo conforme o esperado.',
-          'data': '28/09/2025',
-        },
-      ],
-    },
-    {
-      'numero': 'Contrato Nº 456/2025',
-      'objeto': 'Aquisição de equipamentos de TI',
-      'status': 'Ativo',
-      'ocorrencias': [], // Este contrato ainda não tem ocorrências.
-    },
-    {
-      'numero': 'Contrato Nº 789/2024',
-      'objeto': 'Fornecimento de material de expediente',
-      'status': 'Encerrado',
-      'ocorrencias': [],
-    },
-  ];
+  // A lista agora começa vazia e será preenchida com os dados salvos.
+  List<Map<String, dynamic>> _listaDeContratos = [];
+  final _databaseService = DatabaseService();
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados(); // Chamamos o método para carregar os dados quando a tela inicia.
+  }
+
+  // Método para carregar os dados do serviço
+  Future<void> _carregarDados() async {
+    final contratosSalvos = await _databaseService.carregarContratos();
+    // Se não houver dados salvos, usamos a lista de exemplo inicial.
+    if (contratosSalvos.isEmpty) {
+      setState(() {
+        _listaDeContratos = _getListaInicial();
+      });
+    } else {
+      setState(() {
+        _listaDeContratos = contratosSalvos;
+      });
+    }
+  }
+
+  // Método para salvar os dados usando o serviço
+  Future<void> _salvarDados() async {
+    await _databaseService.salvarContratos(_listaDeContratos);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,40 +60,56 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Text(contrato['numero']!),
               subtitle: Text(contrato['objeto']!),
               trailing: const Icon(Icons.arrow_forward_ios),
-              // 5. Modificando a ação `onTap`
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => ContractDetailScreen(
-                      // 6. Passando o 'contrato' daquele item da lista para a nova tela.
                       contrato: contrato,
                     ),
                   ),
                 );
               },
-            )
+            ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async { // 3. A função onPressed agora é `async`
-          // 4. `await` espera a tela AddContractScreen ser fechada e nos dá o resultado.
+        onPressed: () async {
           final novoContrato = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddContractScreen()),
           );
 
-          // 5. Se o usuário salvou (e não apenas voltou), `novoContrato` não será nulo.
           if (novoContrato != null) {
-            // 6. `setState` é o comando que avisa o Flutter para redesenhar a tela!
             setState(() {
               _listaDeContratos.add(novoContrato);
             });
+            await _salvarDados(); // SALVA a lista atualizada!
           }
         },
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  // A lista de exemplo agora fica em um método separado.
+  List<Map<String, dynamic>> _getListaInicial() {
+    return [
+      {
+        'numero': 'Contrato Nº 123/2025',
+        'objeto': 'Serviço de manutenção predial',
+        'status': 'Ativo',
+        'ocorrencias': [
+          {'titulo': 'Vistoria inicial', 'descricao': 'Tudo conforme o esperado.', 'data': '28/09/2025'}
+        ]
+      },
+      {
+        'numero': 'Contrato Nº 456/2025',
+        'objeto': 'Aquisição de equipamentos de TI',
+        'status': 'Ativo',
+        'ocorrencias': []
+      },
+    ];
   }
 }
