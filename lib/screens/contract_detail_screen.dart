@@ -3,10 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_occurrence_screen.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/occurrence_detail_screen.dart';
+// Importamos o serviço de relatório
+import 'package:orquestra_contratos_gestao_fiscalizacao/services/report_service.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Map<String, dynamic> contrato;
-  // A função agora espera receber a lista de ocorrências atualizada como parâmetro
   final Function(List<dynamic>) onUpdate;
 
   const ContractDetailScreen({
@@ -21,6 +22,8 @@ class ContractDetailScreen extends StatefulWidget {
 
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
   late List<dynamic> _ocorrencias;
+  // Criamos uma instância do serviço de relatório
+  final _reportService = ReportService();
 
   @override
   void initState() {
@@ -33,6 +36,20 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.contrato['numero']!),
+        // ADICIONAMOS O BOTÃO DE AÇÃO AQUI
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            tooltip: 'Gerar Relatório do Contrato',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gerando relatório para este contrato...')),
+              );
+              // Chamamos o novo método para gerar o relatório do contrato atual
+              _reportService.gerarRelatorioParaContratoUnico(widget.contrato);
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -56,18 +73,13 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   return Card(
                     child: ListTile(
                       title: Text(ocorrencia['titulo']!),
-                      subtitle: Text(
-                        ocorrencia['descricao']!,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      subtitle: Text(ocorrencia['descricao']!, overflow: TextOverflow.ellipsis),
                       trailing: Text(ocorrencia['data']!),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => OccurrenceDetailScreen(
-                              ocorrencia: ocorrencia,
-                            ),
+                            builder: (context) => OccurrenceDetailScreen(ocorrencia: ocorrencia),
                           ),
                         );
                       },
@@ -85,11 +97,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             context,
             MaterialPageRoute(builder: (context) => const AddOccurrenceScreen()),
           );
-
           if (novaOcorrencia != null) {
             setState(() {
               _ocorrencias.add(novaOcorrencia);
-              // Passamos a lista atualizada de volta para a HomeScreen
               widget.onUpdate(_ocorrencias);
             });
           }

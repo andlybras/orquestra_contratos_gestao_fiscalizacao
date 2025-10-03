@@ -1,14 +1,26 @@
-// CÓDIGO NOVO E SIMPLIFICADO PARA: services/report_service.dart
+// CÓDIGO COMPLETO PARA: services/report_service.dart
 
-import 'package:flutter/services.dart'; // Usaremos para carregar a fonte
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart'; // O pacote principal que usaremos agora
+import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 
 class ReportService {
+
+  // NOVO MÉTODO para gerar o relatório de um único contrato
+  Future<void> gerarRelatorioParaContratoUnico(Map<String, dynamic> contrato) async {
+    // Truque: criamos uma lista contendo apenas este contrato
+    final List<Map<String, dynamic>> listaDeUmContrato = [contrato];
+    // Chamamos o método que já existe, passando a lista com um item só
+    await gerarRelatorioPDF(listaDeUmContrato);
+  }
+
+  // Este método continua o mesmo, agora ele pode ser usado para um ou vários contratos
   Future<void> gerarRelatorioPDF(List<Map<String, dynamic>> contratos) async {
-    // Cria o documento PDF da mesma forma que antes
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -29,16 +41,14 @@ class ReportService {
         },
       ),
     );
-
-    // A GRANDE MUDANÇA ESTÁ AQUI:
-    // Em vez de salvar e abrir manualmente, usamos o Printing.layoutPdf.
-    // Ele gera uma tela de pré-visualização e permite compartilhar/imprimir.
+    
+    // A função de pré-visualização e compartilhamento
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
   }
 
-  // As funções abaixo continuam exatamente as mesmas de antes
+  // O resto do arquivo continua exatamente o mesmo...
   pw.Widget _construirCabecalho() {
     final dataFormatada = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
     return pw.Column(
@@ -77,7 +87,6 @@ class ReportService {
         child: pw.Text('Nenhuma ocorrência registrada.', style: pw.TextStyle(fontStyle: pw.FontStyle.italic)),
       );
     }
-
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
