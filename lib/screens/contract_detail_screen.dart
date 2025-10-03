@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_occurrence_screen.dart';
-// Import que faltava para a nova tela:
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/occurrence_detail_screen.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Map<String, dynamic> contrato;
-  final Function onUpdate;
+  // A função agora espera receber a lista de ocorrências atualizada como parâmetro
+  final Function(List<dynamic>) onUpdate;
 
   const ContractDetailScreen({
     super.key,
@@ -61,7 +61,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       trailing: Text(ocorrencia['data']!),
-                      // Ação de toque para ir para a tela de detalhes da ocorrência
                       onTap: () {
                         Navigator.push(
                           context,
@@ -90,7 +89,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           if (novaOcorrencia != null) {
             setState(() {
               _ocorrencias.add(novaOcorrencia);
-              widget.onUpdate();
+              // Passamos a lista atualizada de volta para a HomeScreen
+              widget.onUpdate(_ocorrencias);
             });
           }
         },

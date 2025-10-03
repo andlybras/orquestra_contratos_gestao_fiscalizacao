@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // NOVA FUNÇÃO: Mostrar menu de opções
+  // (Encontre a função _mostrarOpcoes e substitua por esta)
   void _mostrarOpcoes(BuildContext context, int index) {
     final contrato = _listaDeContratos[index];
     showDialog(
@@ -68,11 +68,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pop(context); // Fecha o dialog
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ContractDetailScreen(contrato: contrato, onUpdate: _salvarDados)),
+                  MaterialPageRoute(
+                    builder: (context) => ContractDetailScreen(
+                      contrato: contrato,
+                      // A MUDANÇA ESTÁ AQUI:
+                      onUpdate: (novasOcorrencias) {
+                        // 1. Atualiza a lista de ocorrências no contrato correto
+                        setState(() {
+                          _listaDeContratos[index]['ocorrencias'] = novasOcorrencias;
+                        });
+                        // 2. AGORA sim, salva a lista de contratos inteira e atualizada
+                        _salvarDados();
+                      },
+                    ),
+                  ),
                 );
               },
               child: const Text('Ver Detalhes'),
             ),
+            // ... (o resto das opções não muda) ...
             SimpleDialogOption(
               onPressed: () {
                 Navigator.pop(context); // Fecha o dialog
@@ -141,9 +155,9 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.article),
               title: Text(contrato['numero']!),
               subtitle: Text(contrato['objeto']!),
-              trailing: const Icon(Icons.more_vert), // Ícone de 3 pontinhos
-              onTap: () => _mostrarOpcoes(context, index), // Ação onTap agora mostra o menu
-            ),
+              trailing: const Icon(Icons.more_vert),
+              onTap: () => _mostrarOpcoes(context, index),
+            )
           );
         },
       ),
