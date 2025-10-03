@@ -1,8 +1,9 @@
+// CÓDIGO CORRIGIDO PARA: screens/add_occurrence_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart'; // Import do pacote de geolocalização
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart'; // Import do pacote de formatação de data
+import 'package:intl/intl.dart';
 
 class AddOccurrenceScreen extends StatefulWidget {
   const AddOccurrenceScreen({super.key});
@@ -17,9 +18,8 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
   final _descricaoController = TextEditingController();
 
   XFile? _foto;
-  Position? _posicaoGps; // Variável para guardar as coordenadas
+  Position? _posicaoGps;
 
-  // Função para capturar a foto
   Future<void> _tirarFoto() async {
     final ImagePicker picker = ImagePicker();
     final XFile? fotoTirada = await picker.pickImage(source: ImageSource.camera);
@@ -28,33 +28,24 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
     }
   }
 
-  // NOVA FUNÇÃO para obter a geolocalização
   Future<void> _obterLocalizacao() async {
+    // ... (lógica de permissão e captura do GPS que já está funcionando)
     bool servicoHabilitado;
     LocationPermission permissao;
 
     servicoHabilitado = await Geolocator.isLocationServiceEnabled();
-    if (!servicoHabilitado) {
-      return Future.error('Serviços de localização estão desabilitados.');
-    }
+    if (!servicoHabilitado) return Future.error('Serviços de localização desabilitados.');
 
     permissao = await Geolocator.checkPermission();
     if (permissao == LocationPermission.denied) {
       permissao = await Geolocator.requestPermission();
-      if (permissao == LocationPermission.denied) {
-        return Future.error('Permissão de localização negada.');
-      }
+      if (permissao == LocationPermission.denied) return Future.error('Permissão de localização negada.');
     }
 
-    if (permissao == LocationPermission.deniedForever) {
-      return Future.error('Permissão de localização permanentemente negada.');
-    }
+    if (permissao == LocationPermission.deniedForever) return Future.error('Permissão de localização negada permanentemente.');
 
-    // Se tudo deu certo, obtemos a posição
     final position = await Geolocator.getCurrentPosition();
-    setState(() {
-      _posicaoGps = position;
-    });
+    setState(() => _posicaoGps = position);
   }
 
   @override
@@ -75,17 +66,28 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                TextFormField(/* ... campo de título sem alterações ... */),
+                // DECORAÇÃO ADICIONADA DE VOLTA
+                TextFormField(
+                  controller: _tituloController,
+                  decoration: const InputDecoration(labelText: 'Título da Ocorrência', border: OutlineInputBorder()),
+                  validator: (value) => value == null || value.isEmpty ? 'Insira um título' : null,
+                ),
                 const SizedBox(height: 16),
-                TextFormField(/* ... campo de descrição sem alterações ... */),
+                // DECORAÇÃO ADICIONADA DE VOLTA
+                TextFormField(
+                  controller: _descricaoController,
+                  decoration: const InputDecoration(labelText: 'Descrição Detalhada', border: OutlineInputBorder()),
+                  maxLines: 5,
+                  validator: (value) => value == null || value.isEmpty ? 'Insira uma descrição' : null,
+                ),
                 const SizedBox(height: 16),
+
                 if (_foto != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Image.file(File(_foto!.path), height: 200),
                   ),
 
-                // Exibição da geolocalização capturada
                 if (_posicaoGps != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -95,7 +97,6 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
                     ),
                   ),
 
-                // Botões de Ação para evidências
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -108,7 +109,6 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      // Capturamos a data e hora ATUAIS no momento do salvamento
                       final agora = DateTime.now();
                       final formatador = DateFormat('dd/MM/yyyy HH:mm:ss');
                       final dataFormatada = formatador.format(agora);
@@ -116,7 +116,7 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
                       final novaOcorrencia = {
                         'titulo': _tituloController.text,
                         'descricao': _descricaoController.text,
-                        'data': dataFormatada, // Data e hora automáticas!
+                        'data': dataFormatada,
                         'foto_path': _foto?.path,
                         'latitude': _posicaoGps?.latitude,
                         'longitude': _posicaoGps?.longitude,
