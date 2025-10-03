@@ -1,15 +1,18 @@
+// CÓDIGO COMPLETO PARA: screens/contract_detail_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_occurrence_screen.dart';
+// Import que faltava para a nova tela:
+import 'package:orquestra_contratos_gestao_fiscalizacao/screens/occurrence_detail_screen.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   final Map<String, dynamic> contrato;
-  // Lembre-se, adicionamos a função onUpdate para notificar a tela inicial
   final Function onUpdate;
 
   const ContractDetailScreen({
     super.key,
     required this.contrato,
-    required this.onUpdate, // Ela é obrigatória no construtor
+    required this.onUpdate,
   });
 
   @override
@@ -17,13 +20,11 @@ class ContractDetailScreen extends StatefulWidget {
 }
 
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
-  // O tipo correto da lista, para aceitar os Maps de ocorrências
   late List<dynamic> _ocorrencias;
 
   @override
   void initState() {
     super.initState();
-    // A correção do bug: se 'ocorrencias' for nulo, usamos uma lista vazia
     _ocorrencias = List.from(widget.contrato['ocorrencias'] ?? []);
   }
 
@@ -55,8 +56,22 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   return Card(
                     child: ListTile(
                       title: Text(ocorrencia['titulo']!),
-                      subtitle: Text(ocorrencia['descricao']!),
+                      subtitle: Text(
+                        ocorrencia['descricao']!,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       trailing: Text(ocorrencia['data']!),
+                      // Ação de toque para ir para a tela de detalhes da ocorrência
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => OccurrenceDetailScreen(
+                              ocorrencia: ocorrencia,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
@@ -75,7 +90,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           if (novaOcorrencia != null) {
             setState(() {
               _ocorrencias.add(novaOcorrencia);
-              // A chamada para a função de salvar, para garantir a persistência
               widget.onUpdate();
             });
           }
