@@ -36,17 +36,26 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.contrato['numero']!),
-        // ADICIONAMOS O BOTÃO DE AÇÃO AQUI
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'Gerar Relatório do Contrato',
+            tooltip: 'Pré-visualizar Relatório',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Gerando relatório para este contrato...')),
+                const SnackBar(content: Text('Gerando pré-visualização...')),
               );
-              // Chamamos o novo método para gerar o relatório do contrato atual
               _reportService.gerarRelatorioParaContratoUnico(widget.contrato);
+            },
+          ),
+          // NOVO BOTÃO para gerar o Dossiê ZIP específico
+          IconButton(
+            icon: const Icon(Icons.archive),
+            tooltip: 'Exportar Dossiê do Contrato (.zip)',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gerando Dossiê .zip...')),
+              );
+              _reportService.gerarDossieParaContratoUnico(widget.contrato);
             },
           ),
         ],

@@ -1,26 +1,25 @@
-// CÓDIGO COMPLETO E CORRIGIDO PARA: services/report_service.dart
-
 import 'dart:io';
-import 'package:archive/archive_io.dart'; // Pacote para criar arquivos .zip
+import 'package:archive/archive_io.dart';
 import 'package:flutter/services.dart';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart'; // Import do novo pacote de compartilhamento
 
 class ReportService {
-  // --- MÉTODOS PÚBLICOS ---
 
-  // Gera o relatório para um único contrato
   Future<void> gerarRelatorioParaContratoUnico(Map<String, dynamic> contrato) async {
-    final List<Map<String, dynamic>> listaDeUmContrato = [contrato];
-    await gerarRelatorioPDF(listaDeUmContrato);
+    await gerarRelatorioPDF([contrato]);
   }
 
-  // Gera a pré-visualização do PDF para uma lista de contratos
+  // NOVO: Método para gerar o Dossiê de um único contrato
+  Future<void> gerarDossieParaContratoUnico(Map<String, dynamic> contrato) async {
+    await gerarDossieCompleto([contrato]);
+  }
+
   Future<void> gerarRelatorioPDF(List<Map<String, dynamic>> contratos) async {
     final pdf = await _criarDocumentoPDF(contratos);
     await Printing.layoutPdf(
@@ -28,22 +27,16 @@ class ReportService {
     );
   }
 
-  // NOVO: Gera o Dossiê completo (.zip)
   Future<void> gerarDossieCompleto(List<Map<String, dynamic>> contratos) async {
-    // 1. Gera o documento PDF em memória
     final pdf = await _criarDocumentoPDF(contratos);
     final pdfBytes = await pdf.save();
 
-    // 2. Prepara o caminho e o codificador do arquivo ZIP
     final directory = await getTemporaryDirectory();
     final zipPath = '${directory.path}/dossie_contratos.zip';
     final encoder = ZipFileEncoder();
     encoder.create(zipPath);
-
-    // 3. Adiciona o arquivo PDF ao ZIP
     encoder.addArchiveFile(ArchiveFile('Relatorio_Contratos.pdf', pdfBytes.length, pdfBytes));
 
-    // 4. Itera sobre os contratos e ocorrências para adicionar as fotos
     for (final contrato in contratos) {
       final List<dynamic>? ocorrencias = contrato['ocorrencias'];
       if (ocorrencias != null) {
@@ -52,7 +45,6 @@ class ReportService {
           if (fotoPath != null) {
             final file = File(fotoPath);
             if (await file.exists()) {
-              // Extrai o nome do arquivo para usar no ZIP
               final fileName = fotoPath.split('/').last;
               encoder.addFile(file, 'Evidencias/$fileName');
             }
@@ -61,11 +53,11 @@ class ReportService {
       }
     }
     
-    // 5. Fecha e finaliza o arquivo ZIP
     encoder.close();
 
-    // 6. Abre o arquivo ZIP salvo
-    await OpenFile.open(zipPath);
+    // A MUDANÇA ESTÁ AQUI: Usamos o Share.shareXFiles para compartilhar o ZIP
+    final xFile = XFile(zipPath);
+    await Share.shareXFiles([xFile], text: 'Dossiê de Contratos Gerado');
   }
 
   // --- MÉTODOS PRIVADOS DE CONSTRUÇÃO DO PDF ---
