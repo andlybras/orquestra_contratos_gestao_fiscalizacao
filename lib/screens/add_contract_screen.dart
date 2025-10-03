@@ -87,7 +87,8 @@ class _AddContractScreenState extends State<AddContractScreen> {
                     final novoContrato = {
                       'numero': _numeroController.text,
                       'objeto': _objetoController.text,
-                      'status': 'Ativo', // Status padrão para novos contratos
+                      'status': 'Ativo',
+                      'ocorrencias': [], // A LINHA QUE FALTAVA!
                     };
 
                     // 2. Fecha a tela e "devolve" o novoContrato como resultado.

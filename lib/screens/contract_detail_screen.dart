@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_occurrence_screen.dart';
 
 class ContractDetailScreen extends StatefulWidget {
-  // O construtor ainda recebe o Map do contrato
   final Map<String, dynamic> contrato;
+  // Lembre-se, adicionamos a função onUpdate para notificar a tela inicial
+  final Function onUpdate;
 
   const ContractDetailScreen({
     super.key,
     required this.contrato,
+    required this.onUpdate, // Ela é obrigatória no construtor
   });
 
   @override
@@ -15,15 +17,14 @@ class ContractDetailScreen extends StatefulWidget {
 }
 
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
-  // A lista de ocorrências agora é uma variável de estado
-  late List<Map<String, String>> _ocorrencias;
+  // O tipo correto da lista, para aceitar os Maps de ocorrências
+  late List<dynamic> _ocorrencias;
 
   @override
   void initState() {
     super.initState();
-    // Inicializamos a lista de ocorrências com os dados recebidos do contrato
-    // Usamos `List.from` para criar uma cópia modificável da lista.
-    _ocorrencias = List.from(widget.contrato['ocorrencias']);
+    // A correção do bug: se 'ocorrencias' for nulo, usamos uma lista vazia
+    _ocorrencias = List.from(widget.contrato['ocorrencias'] ?? []);
   }
 
   @override
@@ -37,20 +38,15 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ... (informações do contrato que já tínhamos)
-            Text('Objeto: ${widget.contrato['objeto']!}', style: TextStyle(fontSize: 16)),
+            Text('Objeto: ${widget.contrato['objeto']!}', style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
-            Text('Status: ${widget.contrato['status']!}', style: TextStyle(fontSize: 16)),
+            Text('Status: ${widget.contrato['status']!}', style: const TextStyle(fontSize: 16)),
             const Divider(height: 40, thickness: 2),
-
-            // Título para a lista de ocorrências
-            Text(
+            const Text(
               'Ocorrências Registradas',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             const SizedBox(height: 16),
-
-            // Lista de ocorrências
             Expanded(
               child: ListView.builder(
                 itemCount: _ocorrencias.length,
@@ -69,7 +65,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           ],
         ),
       ),
-      // Botão para adicionar uma nova ocorrência
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final novaOcorrencia = await Navigator.push(
@@ -80,6 +75,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           if (novaOcorrencia != null) {
             setState(() {
               _ocorrencias.add(novaOcorrencia);
+              // A chamada para a função de salvar, para garantir a persistência
+              widget.onUpdate();
             });
           }
         },

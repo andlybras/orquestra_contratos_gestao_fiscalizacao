@@ -66,11 +66,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(
                     builder: (context) => ContractDetailScreen(
                       contrato: contrato,
+                      // 3. Passamos a função `_salvarDados` como o parâmetro `onUpdate`.
+                      onUpdate: _salvarDados,
                     ),
                   ),
                 );
               },
-            ),
+            )
           );
         },
       ),
