@@ -10,13 +10,10 @@ class AddContractScreen extends StatefulWidget {
 class _AddContractScreenState extends State<AddContractScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // 1. Declarando os "secretários" (Controllers) para cada campo.
   final _numeroController = TextEditingController();
   final _objetoController = TextEditingController();
   final _contratadaController = TextEditingController();
 
-  // 2. É uma boa prática "dispensar" os controllers quando a tela é destruída
-  // para liberar a memória que eles usam.
   @override
   void dispose() {
     _numeroController.dispose();
@@ -37,14 +34,12 @@ class _AddContractScreenState extends State<AddContractScreen> {
           key: _formKey,
           child: Column(
             children: [
-              // 3. Anexando o controller ao seu respectivo campo de texto.
               TextFormField(
                 controller: _numeroController,
                 decoration: const InputDecoration(
                   labelText: 'Número do Contrato',
                   border: OutlineInputBorder(),
                 ),
-                // 4. Adicionando uma regra de validação simples.
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, insira o número do contrato';
@@ -52,6 +47,7 @@ class _AddContractScreenState extends State<AddContractScreen> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
               TextFormField(
                 controller: _objetoController,
@@ -66,6 +62,7 @@ class _AddContractScreenState extends State<AddContractScreen> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
               TextFormField(
                 controller: _contratadaController,
@@ -80,16 +77,21 @@ class _AddContractScreenState extends State<AddContractScreen> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
-                  // 5. Ação ao pressionar o botão "Salvar".
+                  // Ação ao pressionar o botão "Salvar".
                   if (_formKey.currentState!.validate()) {
-                    // Se o formulário for válido, mostramos os dados no console.
-                    print('Formulário Válido!');
-                    print('Número: ${_numeroController.text}');
-                    print('Objeto: ${_objetoController.text}');
-                    print('Contratada: ${_contratadaController.text}');
+                    // 1. Cria um Map com os dados do novo contrato.
+                    final novoContrato = {
+                      'numero': _numeroController.text,
+                      'objeto': _objetoController.text,
+                      'status': 'Ativo', // Status padrão para novos contratos
+                    };
+
+                    // 2. Fecha a tela e "devolve" o novoContrato como resultado.
+                    Navigator.pop(context, novoContrato);
                   }
                 },
                 child: const Text('Salvar Contrato'),

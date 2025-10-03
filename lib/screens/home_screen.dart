@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_contract_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+// 1. Convertemos para StatefulWidget
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  // 1. Nossos dados de exemplo (mock data).
-  // No futuro, esta lista virá de um banco de dados.
-  final List<Map<String, String>> _listaDeContratos = const [
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // 2. A lista de contratos agora faz parte do Estado, para que possa ser modificada.
+  final List<Map<String, String>> _listaDeContratos = [
     {
       'numero': 'Contrato Nº 123/2025',
       'objeto': 'Serviço de manutenção predial',
@@ -32,38 +37,39 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
-      // 2. ListView.builder: O construtor de listas do Flutter.
       body: ListView.builder(
-        // `itemCount` diz à lista quantos itens ela precisa construir.
         itemCount: _listaDeContratos.length,
-        // `itemBuilder` é a "receita" para construir cada item da lista.
         itemBuilder: (context, index) {
           final contrato = _listaDeContratos[index];
-          // 3. Card: Um widget que cria um "cartão" com elevação e bordas arredondadas.
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: ListTile(
-              // 4. ListTile: Um widget de linha de lista pré-estilizado.
-              leading: const Icon(Icons.article), // Ícone à esquerda
-              title: Text(contrato['numero']!), // Título principal
-              subtitle: Text(contrato['objeto']!), // Subtítulo
-              trailing: const Icon(Icons.arrow_forward_ios), // Ícone à direita
+              leading: const Icon(Icons.article),
+              title: Text(contrato['numero']!),
+              subtitle: Text(contrato['objeto']!),
+              trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                // Ação a ser executada quando o item for tocado (no futuro).
                 print('Contrato selecionado: ${contrato['numero']}');
               },
             ),
           );
         },
       ),
-      // 5. FloatingActionButton: O botão de ação flutuante.
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // 5. Ação de Navegação
-          Navigator.push(
+        onPressed: () async { // 3. A função onPressed agora é `async`
+          // 4. `await` espera a tela AddContractScreen ser fechada e nos dá o resultado.
+          final novoContrato = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddContractScreen()),
           );
+
+          // 5. Se o usuário salvou (e não apenas voltou), `novoContrato` não será nulo.
+          if (novoContrato != null) {
+            // 6. `setState` é o comando que avisa o Flutter para redesenhar a tela!
+            setState(() {
+              _listaDeContratos.add(novoContrato);
+            });
+          }
         },
         child: const Icon(Icons.add),
       ),
