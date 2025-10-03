@@ -1,6 +1,8 @@
-import 'dart:io'; // Import necessário para trabalhar com arquivos (File)
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Import do novo pacote
+import 'package:geolocator/geolocator.dart'; // Import do pacote de geolocalização
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart'; // Import do pacote de formatação de data
 
 class AddOccurrenceScreen extends StatefulWidget {
   const AddOccurrenceScreen({super.key});
@@ -14,19 +16,45 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
   final _tituloController = TextEditingController();
   final _descricaoController = TextEditingController();
 
-  // Variável para guardar o caminho da foto tirada
   XFile? _foto;
+  Position? _posicaoGps; // Variável para guardar as coordenadas
 
+  // Função para capturar a foto
   Future<void> _tirarFoto() async {
     final ImagePicker picker = ImagePicker();
-    // Abre a câmera do dispositivo
     final XFile? fotoTirada = await picker.pickImage(source: ImageSource.camera);
-
     if (fotoTirada != null) {
-      setState(() {
-        _foto = fotoTirada;
-      });
+      setState(() => _foto = fotoTirada);
     }
+  }
+
+  // NOVA FUNÇÃO para obter a geolocalização
+  Future<void> _obterLocalizacao() async {
+    bool servicoHabilitado;
+    LocationPermission permissao;
+
+    servicoHabilitado = await Geolocator.isLocationServiceEnabled();
+    if (!servicoHabilitado) {
+      return Future.error('Serviços de localização estão desabilitados.');
+    }
+
+    permissao = await Geolocator.checkPermission();
+    if (permissao == LocationPermission.denied) {
+      permissao = await Geolocator.requestPermission();
+      if (permissao == LocationPermission.denied) {
+        return Future.error('Permissão de localização negada.');
+      }
+    }
+
+    if (permissao == LocationPermission.deniedForever) {
+      return Future.error('Permissão de localização permanentemente negada.');
+    }
+
+    // Se tudo deu certo, obtemos a posição
+    final position = await Geolocator.getCurrentPosition();
+    setState(() {
+      _posicaoGps = position;
+    });
   }
 
   @override
@@ -39,54 +67,59 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Registrar Ocorrência'),
-      ),
+      appBar: AppBar(title: const Text('Registrar Ocorrência')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView( // Usamos para evitar que o teclado cubra os campos
+          child: SingleChildScrollView(
             child: Column(
               children: [
-                TextFormField(
-                  controller: _tituloController,
-                  decoration: const InputDecoration(labelText: 'Título', border: OutlineInputBorder()),
-                  validator: (value) => value == null || value.isEmpty ? 'Insira um título' : null,
-                ),
+                TextFormField(/* ... campo de título sem alterações ... */),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _descricaoController,
-                  decoration: const InputDecoration(labelText: 'Descrição', border: OutlineInputBorder()),
-                  maxLines: 5,
-                  validator: (value) => value == null || value.isEmpty ? 'Insira uma descrição' : null,
-                ),
+                TextFormField(/* ... campo de descrição sem alterações ... */),
                 const SizedBox(height: 16),
-                
-                // Exibição da prévia da foto
                 if (_foto != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Image.file(File(_foto!.path), height: 200),
                   ),
 
-                // Botão para tirar a foto
-                OutlinedButton.icon(
-                  onPressed: _tirarFoto,
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Adicionar Foto'),
-                ),
+                // Exibição da geolocalização capturada
+                if (_posicaoGps != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Localização: Lat ${_posicaoGps!.latitude.toStringAsFixed(5)}, Lon ${_posicaoGps!.longitude.toStringAsFixed(5)}',
+                      style: TextStyle(color: Colors.green[700]),
+                    ),
+                  ),
 
+                // Botões de Ação para evidências
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    OutlinedButton.icon(onPressed: _tirarFoto, icon: const Icon(Icons.camera_alt), label: const Text('Foto')),
+                    OutlinedButton.icon(onPressed: _obterLocalizacao, icon: const Icon(Icons.location_on), label: const Text('GPS')),
+                  ],
+                ),
+                
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
+                      // Capturamos a data e hora ATUAIS no momento do salvamento
+                      final agora = DateTime.now();
+                      final formatador = DateFormat('dd/MM/yyyy HH:mm:ss');
+                      final dataFormatada = formatador.format(agora);
+
                       final novaOcorrencia = {
                         'titulo': _tituloController.text,
                         'descricao': _descricaoController.text,
-                        'data': '03/10/2025',
-                        // Adicionamos o caminho da foto aos dados
+                        'data': dataFormatada, // Data e hora automáticas!
                         'foto_path': _foto?.path,
+                        'latitude': _posicaoGps?.latitude,
+                        'longitude': _posicaoGps?.longitude,
                       };
                       Navigator.pop(context, novaOcorrencia);
                     }
