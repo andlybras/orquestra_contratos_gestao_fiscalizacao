@@ -1,42 +1,66 @@
-// 1. Importação: Inclui a 'caixa de ferramentas' de widgets visuais do Flutter (estilo Material Design).
 import 'package:flutter/material.dart';
 
-// 2. Ponto de Partida: A função `main` é a 'ignição' do nosso aplicativo. A execução sempre começa aqui.
-void main() {
-  // `runApp` é o comando que diz ao Flutter para desenhar nosso app na tela.
-  runApp(const MyApp());
-}
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
-// 3. O Widget Principal: Esta é a 'planta baixa' do nosso aplicativo.
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // 1. Nossos dados de exemplo (mock data).
+  // No futuro, esta lista virá de um banco de dados.
+  final List<Map<String, String>> _listaDeContratos = const [
+    {
+      'numero': 'Contrato Nº 123/2025',
+      'objeto': 'Serviço de manutenção predial',
+      'status': 'Ativo',
+    },
+    {
+      'numero': 'Contrato Nº 456/2025',
+      'objeto': 'Aquisição de equipamentos de TI',
+      'status': 'Ativo',
+    },
+    {
+      'numero': 'Contrato Nº 789/2024',
+      'objeto': 'Fornecimento de material de expediente',
+      'status': 'Encerrado',
+    },
+  ];
 
-  // O método `build` descreve como o aplicativo deve ser desenhado.
   @override
   Widget build(BuildContext context) {
-    // 4. A Fundação: MaterialApp é o widget base que configura o tema, título e navegação.
-    return MaterialApp(
-      // Título usado pelo sistema operacional (ex: na lista de apps recentes).
-      title: 'Orquestra Contratos',
-      debugShowCheckedModeBanner: false, // Remove a faixa "DEBUG" do canto da tela.
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-        useMaterial3: true,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Orquestra Contratos'),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
       ),
-      // 5. O Esqueleto da Tela: `Scaffold` nos dá a estrutura de uma página (barra de topo, corpo, etc).
-      home: Scaffold(
-        // `appBar` é a barra de título no topo.
-        appBar: AppBar(
-          // Título que aparece visivelmente na barra.
-          title: const Text('Orquestra Contratos'),
-        ),
-        // `body` é o conteúdo principal da nossa tela.
-        body: const Center(
-          // `Center` centraliza o widget filho.
-          child: Text(
-            'Gestão e Fiscalização', // Nosso lema!
-          ),
-        ),
+      // 2. ListView.builder: O construtor de listas do Flutter.
+      body: ListView.builder(
+        // `itemCount` diz à lista quantos itens ela precisa construir.
+        itemCount: _listaDeContratos.length,
+        // `itemBuilder` é a "receita" para construir cada item da lista.
+        itemBuilder: (context, index) {
+          final contrato = _listaDeContratos[index];
+          // 3. Card: Um widget que cria um "cartão" com elevação e bordas arredondadas.
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: ListTile(
+              // 4. ListTile: Um widget de linha de lista pré-estilizado.
+              leading: const Icon(Icons.article), // Ícone à esquerda
+              title: Text(contrato['numero']!), // Título principal
+              subtitle: Text(contrato['objeto']!), // Subtítulo
+              trailing: const Icon(Icons.arrow_forward_ios), // Ícone à direita
+              onTap: () {
+                // Ação a ser executada quando o item for tocado (no futuro).
+                print('Contrato selecionado: ${contrato['numero']}');
+              },
+            ),
+          );
+        },
+      ),
+      // 5. FloatingActionButton: O botão de ação flutuante.
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Ação para adicionar um novo contrato (no futuro).
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
