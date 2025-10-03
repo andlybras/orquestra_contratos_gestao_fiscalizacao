@@ -1,7 +1,5 @@
-// GARANTA QUE ESTA LINHA ESTEJA AQUI!
 import 'package:flutter/material.dart';
 
-// 1. Convertemos para StatefulWidget
 class AddContractScreen extends StatefulWidget {
   const AddContractScreen({super.key});
 
@@ -10,8 +8,22 @@ class AddContractScreen extends StatefulWidget {
 }
 
 class _AddContractScreenState extends State<AddContractScreen> {
-  // 2. Chave para identificar e controlar nosso formulário
   final _formKey = GlobalKey<FormState>();
+
+  // 1. Declarando os "secretários" (Controllers) para cada campo.
+  final _numeroController = TextEditingController();
+  final _objetoController = TextEditingController();
+  final _contratadaController = TextEditingController();
+
+  // 2. É uma boa prática "dispensar" os controllers quando a tela é destruída
+  // para liberar a memória que eles usam.
+  @override
+  void dispose() {
+    _numeroController.dispose();
+    _objetoController.dispose();
+    _contratadaController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,43 +31,66 @@ class _AddContractScreenState extends State<AddContractScreen> {
       appBar: AppBar(
         title: const Text('Adicionar Novo Contrato'),
       ),
-      // 3. Adicionamos um padding para o formulário não ficar colado nas bordas
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        // 4. O widget Form, que agrupa e gerencia os campos de texto
         child: Form(
-          key: _formKey, // Associamos a chave ao formulário
+          key: _formKey,
           child: Column(
-            // `Column` organiza os widgets filhos em uma coluna vertical
             children: [
-              // 5. O campo de texto para o número do contrato
+              // 3. Anexando o controller ao seu respectivo campo de texto.
               TextFormField(
+                controller: _numeroController,
                 decoration: const InputDecoration(
                   labelText: 'Número do Contrato',
                   border: OutlineInputBorder(),
                 ),
+                // 4. Adicionando uma regra de validação simples.
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira o número do contrato';
+                  }
+                  return null;
+                },
               ),
-              const SizedBox(height: 16), // Apenas um espaço entre os campos
-              // Campo de texto para o objeto do contrato
+              const SizedBox(height: 16),
               TextFormField(
+                controller: _objetoController,
                 decoration: const InputDecoration(
                   labelText: 'Objeto do Contrato',
                   border: OutlineInputBorder(),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira o objeto do contrato';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
-              // Campo de texto para a empresa contratada
               TextFormField(
+                controller: _contratadaController,
                 decoration: const InputDecoration(
                   labelText: 'Empresa Contratada',
                   border: OutlineInputBorder(),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira o nome da empresa';
+                  }
+                  return null;
+                },
               ),
-              const SizedBox(height: 32), // Um espaço maior antes do botão
-              // 6. Um botão para salvar o formulário
+              const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
-                  // Ação de salvar (no futuro)
+                  // 5. Ação ao pressionar o botão "Salvar".
+                  if (_formKey.currentState!.validate()) {
+                    // Se o formulário for válido, mostramos os dados no console.
+                    print('Formulário Válido!');
+                    print('Número: ${_numeroController.text}');
+                    print('Objeto: ${_objetoController.text}');
+                    print('Contratada: ${_contratadaController.text}');
+                  }
                 },
                 child: const Text('Salvar Contrato'),
               ),
