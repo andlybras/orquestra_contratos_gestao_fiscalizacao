@@ -12,21 +12,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // 2. A lista de contratos agora faz parte do Estado, para que possa ser modificada.
-  final List<Map<String, String>> _listaDeContratos = [
+   // Usamos List<Map<String, dynamic>> para permitir diferentes tipos de dados.
+  final List<Map<String, dynamic>> _listaDeContratos = [
     {
       'numero': 'Contrato Nº 123/2025',
       'objeto': 'Serviço de manutenção predial',
       'status': 'Ativo',
+      // Cada contrato agora tem sua própria lista de ocorrências.
+      'ocorrencias': [
+        {
+          'titulo': 'Vistoria inicial',
+          'descricao': 'Tudo conforme o esperado.',
+          'data': '28/09/2025',
+        },
+      ],
     },
     {
       'numero': 'Contrato Nº 456/2025',
       'objeto': 'Aquisição de equipamentos de TI',
       'status': 'Ativo',
+      'ocorrencias': [], // Este contrato ainda não tem ocorrências.
     },
     {
       'numero': 'Contrato Nº 789/2024',
       'objeto': 'Fornecimento de material de expediente',
       'status': 'Encerrado',
+      'ocorrencias': [],
     },
   ];
 

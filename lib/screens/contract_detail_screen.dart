@@ -1,55 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_occurrence_screen.dart';
 
-class ContractDetailScreen extends StatelessWidget {
-  // 1. A tela declara que precisa receber um 'Map' de contrato para funcionar.
-  final Map<String, String> contrato;
+class ContractDetailScreen extends StatefulWidget {
+  // O construtor ainda recebe o Map do contrato
+  final Map<String, dynamic> contrato;
 
-  // 2. O construtor exige que o 'contrato' seja passado ao criar a tela.
   const ContractDetailScreen({
     super.key,
     required this.contrato,
   });
 
   @override
+  State<ContractDetailScreen> createState() => _ContractDetailScreenState();
+}
+
+class _ContractDetailScreenState extends State<ContractDetailScreen> {
+  // A lista de ocorrências agora é uma variável de estado
+  late List<Map<String, String>> _ocorrencias;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializamos a lista de ocorrências com os dados recebidos do contrato
+    // Usamos `List.from` para criar uma cópia modificável da lista.
+    _ocorrencias = List.from(widget.contrato['ocorrencias']);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // 3. O título da tela usa o dado recebido do contrato.
-        title: Text(contrato['numero']!),
+        title: Text(widget.contrato['numero']!),
       ),
-      // 4. Exibimos os detalhes do contrato no corpo da tela.
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Alinha o texto à esquerda
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Objeto:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
+            // ... (informações do contrato que já tínhamos)
+            Text('Objeto: ${widget.contrato['objeto']!}', style: TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
+            Text('Status: ${widget.contrato['status']!}', style: TextStyle(fontSize: 16)),
+            const Divider(height: 40, thickness: 2),
+
+            // Título para a lista de ocorrências
             Text(
-              contrato['objeto']!,
-              style: TextStyle(fontSize: 16),
+              'Ocorrências Registradas',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Status:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            const SizedBox(height: 16),
+
+            // Lista de ocorrências
+            Expanded(
+              child: ListView.builder(
+                itemCount: _ocorrencias.length,
+                itemBuilder: (context, index) {
+                  final ocorrencia = _ocorrencias[index];
+                  return Card(
+                    child: ListTile(
+                      title: Text(ocorrencia['titulo']!),
+                      subtitle: Text(ocorrencia['descricao']!),
+                      trailing: Text(ocorrencia['data']!),
+                    ),
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              contrato['status']!,
-              style: TextStyle(fontSize: 16),
             ),
           ],
         ),
+      ),
+      // Botão para adicionar uma nova ocorrência
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final novaOcorrencia = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddOccurrenceScreen()),
+          );
+
+          if (novaOcorrencia != null) {
+            setState(() {
+              _ocorrencias.add(novaOcorrencia);
+            });
+          }
+        },
+        child: const Icon(Icons.add_comment),
       ),
     );
   }
