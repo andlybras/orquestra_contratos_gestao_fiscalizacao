@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_contract_screen.dart';
+import 'package:orquestra_contratos_gestao_fiscalizacao/screens/contract_detail_screen.dart';
 
 // 1. Convertemos para StatefulWidget
 class HomeScreen extends StatefulWidget {
@@ -48,10 +49,19 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Text(contrato['numero']!),
               subtitle: Text(contrato['objeto']!),
               trailing: const Icon(Icons.arrow_forward_ios),
+              // 5. Modificando a ação `onTap`
               onTap: () {
-                print('Contrato selecionado: ${contrato['numero']}');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ContractDetailScreen(
+                      // 6. Passando o 'contrato' daquele item da lista para a nova tela.
+                      contrato: contrato,
+                    ),
+                  ),
+                );
               },
-            ),
+            )
           );
         },
       ),
