@@ -11,35 +11,117 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // A lista agora começa vazia e será preenchida com os dados salvos.
   List<Map<String, dynamic>> _listaDeContratos = [];
   final _databaseService = DatabaseService();
 
   @override
   void initState() {
     super.initState();
-    _carregarDados(); // Chamamos o método para carregar os dados quando a tela inicia.
+    _carregarDados();
   }
 
-  // Método para carregar os dados do serviço
   Future<void> _carregarDados() async {
     final contratosSalvos = await _databaseService.carregarContratos();
-    // Se não houver dados salvos, usamos a lista de exemplo inicial.
-    if (contratosSalvos.isEmpty) {
-      setState(() {
-        _listaDeContratos = _getListaInicial();
-      });
-    } else {
-      setState(() {
-        _listaDeContratos = contratosSalvos;
-      });
+    if (contratosSalvos.isEmpty && mounted) {
+      setState(() => _listaDeContratos = _getListaInicial());
+    } else if (mounted) {
+      setState(() => _listaDeContratos = contratosSalvos);
     }
   }
 
-  // Método para salvar os dados usando o serviço
   Future<void> _salvarDados() async {
     await _databaseService.salvarContratos(_listaDeContratos);
   }
+
+  // NOVA FUNÇÃO: Navegar para a tela de adicionar/editar
+  void _navegarParaAdicionarEditarContrato({Map<String, dynamic>? contrato, int? index}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddContractScreen(contratoInicial: contrato)),
+    ).then((dadosRetornados) {
+      if (dadosRetornados != null) {
+        setState(() {
+          if (index != null) {
+            // Modo Edição: substitui o contrato no índice especificado
+            _listaDeContratos[index] = dadosRetornados;
+          } else {
+            // Modo Adição: adiciona um novo contrato à lista
+            _listaDeContratos.add(dadosRetornados);
+          }
+        });
+        _salvarDados();
+      }
+    });
+  }
+
+  // NOVA FUNÇÃO: Mostrar menu de opções
+  void _mostrarOpcoes(BuildContext context, int index) {
+    final contrato = _listaDeContratos[index];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+          title: Text(contrato['numero']!),
+          children: <Widget>[
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context); // Fecha o dialog
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ContractDetailScreen(contrato: contrato, onUpdate: _salvarDados)),
+                );
+              },
+              child: const Text('Ver Detalhes'),
+            ),
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context); // Fecha o dialog
+                _navegarParaAdicionarEditarContrato(contrato: contrato, index: index);
+              },
+              child: const Text('Editar'),
+            ),
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context); // Fecha o dialog
+                _confirmarExclusao(context, index);
+              },
+              child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // NOVA FUNÇÃO: Confirmar exclusão
+  void _confirmarExclusao(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar Exclusão'),
+          content: const Text('Você tem certeza que deseja excluir este contrato e todas as suas ocorrências?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                setState(() {
+                  _listaDeContratos.removeAt(index);
+                });
+                _salvarDados();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -59,59 +141,22 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.article),
               title: Text(contrato['numero']!),
               subtitle: Text(contrato['objeto']!),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ContractDetailScreen(
-                      contrato: contrato,
-                      // 3. Passamos a função `_salvarDados` como o parâmetro `onUpdate`.
-                      onUpdate: _salvarDados,
-                    ),
-                  ),
-                );
-              },
-            )
+              trailing: const Icon(Icons.more_vert), // Ícone de 3 pontinhos
+              onTap: () => _mostrarOpcoes(context, index), // Ação onTap agora mostra o menu
+            ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final novoContrato = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddContractScreen()),
-          );
-
-          if (novoContrato != null) {
-            setState(() {
-              _listaDeContratos.add(novoContrato);
-            });
-            await _salvarDados(); // SALVA a lista atualizada!
-          }
-        },
+        onPressed: () => _navegarParaAdicionarEditarContrato(),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  // A lista de exemplo agora fica em um método separado.
   List<Map<String, dynamic>> _getListaInicial() {
     return [
-      {
-        'numero': 'Contrato Nº 123/2025',
-        'objeto': 'Serviço de manutenção predial',
-        'status': 'Ativo',
-        'ocorrencias': [
-          {'titulo': 'Vistoria inicial', 'descricao': 'Tudo conforme o esperado.', 'data': '28/09/2025'}
-        ]
-      },
-      {
-        'numero': 'Contrato Nº 456/2025',
-        'objeto': 'Aquisição de equipamentos de TI',
-        'status': 'Ativo',
-        'ocorrencias': []
-      },
+      // ... sua lista de exemplo ...
     ];
   }
 }
