@@ -1,7 +1,11 @@
+// CÓDIGO COMPLETO PARA: screens/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_contract_screen.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/contract_detail_screen.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/services/database_service.dart';
+// Importamos nosso novo serviço de relatório
+import 'package:orquestra_contratos_gestao_fiscalizacao/services/report_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _listaDeContratos = [];
   final _databaseService = DatabaseService();
+  // Criamos uma instância do nosso serviço de relatório
+  final _reportService = ReportService();
 
   @override
   void initState() {
@@ -33,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await _databaseService.salvarContratos(_listaDeContratos);
   }
 
-  // NOVA FUNÇÃO: Navegar para a tela de adicionar/editar
   void _navegarParaAdicionarEditarContrato({Map<String, dynamic>? contrato, int? index}) {
     Navigator.push(
       context,
@@ -42,10 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (dadosRetornados != null) {
         setState(() {
           if (index != null) {
-            // Modo Edição: substitui o contrato no índice especificado
             _listaDeContratos[index] = dadosRetornados;
           } else {
-            // Modo Adição: adiciona um novo contrato à lista
             _listaDeContratos.add(dadosRetornados);
           }
         });
@@ -54,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // (Encontre a função _mostrarOpcoes e substitua por esta)
   void _mostrarOpcoes(BuildContext context, int index) {
     final contrato = _listaDeContratos[index];
     showDialog(
@@ -65,19 +67,16 @@ class _HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             SimpleDialogOption(
               onPressed: () {
-                Navigator.pop(context); // Fecha o dialog
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => ContractDetailScreen(
                       contrato: contrato,
-                      // A MUDANÇA ESTÁ AQUI:
                       onUpdate: (novasOcorrencias) {
-                        // 1. Atualiza a lista de ocorrências no contrato correto
                         setState(() {
                           _listaDeContratos[index]['ocorrencias'] = novasOcorrencias;
                         });
-                        // 2. AGORA sim, salva a lista de contratos inteira e atualizada
                         _salvarDados();
                       },
                     ),
@@ -86,17 +85,16 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: const Text('Ver Detalhes'),
             ),
-            // ... (o resto das opções não muda) ...
             SimpleDialogOption(
               onPressed: () {
-                Navigator.pop(context); // Fecha o dialog
+                Navigator.pop(context);
                 _navegarParaAdicionarEditarContrato(contrato: contrato, index: index);
               },
               child: const Text('Editar'),
             ),
             SimpleDialogOption(
               onPressed: () {
-                Navigator.pop(context); // Fecha o dialog
+                Navigator.pop(context);
                 _confirmarExclusao(context, index);
               },
               child: const Text('Excluir', style: TextStyle(color: Colors.red)),
@@ -107,7 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // NOVA FUNÇÃO: Confirmar exclusão
   void _confirmarExclusao(BuildContext context, int index) {
     showDialog(
       context: context,
@@ -144,6 +141,21 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Orquestra Contratos'),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
+        // Adicionamos um botão de ação na AppBar
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            tooltip: 'Gerar Relatório',
+            onPressed: () {
+              // Mostra uma mensagem rápida para o usuário
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gerando relatório...')),
+              );
+              // Chama o serviço para gerar o PDF com a lista atual de contratos
+              _reportService.gerarRelatorioPDF(_listaDeContratos);
+            },
+          ),
+        ],
       ),
       body: ListView.builder(
         itemCount: _listaDeContratos.length,
@@ -157,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: Text(contrato['objeto']!),
               trailing: const Icon(Icons.more_vert),
               onTap: () => _mostrarOpcoes(context, index),
-            )
+            ),
           );
         },
       ),
@@ -170,7 +182,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> _getListaInicial() {
     return [
-      // ... sua lista de exemplo ...
+      {
+        'numero': 'Contrato Nº 123/2025',
+        'objeto': 'Serviço de manutenção predial',
+        'status': 'Ativo',
+        'ocorrencias': [
+          {'titulo': 'Vistoria inicial', 'descricao': 'Tudo conforme o esperado.', 'data': '28/09/2025'}
+        ]
+      },
+      {
+        'numero': 'Contrato Nº 456/2025',
+        'objeto': 'Aquisição de equipamentos de TI',
+        'status': 'Ativo',
+        'ocorrencias': []
+      },
     ];
   }
 }
