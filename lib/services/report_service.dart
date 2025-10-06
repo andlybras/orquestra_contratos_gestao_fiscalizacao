@@ -1,19 +1,21 @@
-// CÓDIGO COMPLETO E CORRIGIDO PARA: services/report_service.dart
+// CÓDIGO COMPLETO PARA: services/report_service.dart
 
 import 'dart:io';
 import 'package:archive/archive_io.dart';
-// IMPORT ADICIONADO AQUI:
+import 'package:flutter/services.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ReportService {
-
   Future<void> gerarRelatorioParaContratoUnico(Map<String, dynamic> contrato) async {
-    await gerarRelatorioPDF([contrato]);
+    final List<Map<String, dynamic>> listaDeUmContrato = [contrato];
+    await gerarRelatorioPDF(listaDeUmContrato);
   }
 
   Future<void> gerarDossieParaContratoUnico(Map<String, dynamic> contrato) async {
@@ -51,13 +53,13 @@ class ReportService {
         }
       }
     }
-    
+
     encoder.close();
 
     final xFile = XFile(zipPath);
     await Share.shareXFiles([xFile], text: 'Dossiê de Contratos Gerado');
   }
-  
+
   Future<void> _adicionarArquivoAoZip(ZipFileEncoder encoder, String path, String dir) async {
     final file = File(path);
     if (await file.exists()) {
@@ -65,7 +67,7 @@ class ReportService {
       encoder.addFile(file, '$dir/$fileName');
     }
   }
-  
+
   Future<pw.Document> _criarDocumentoPDF(List<Map<String, dynamic>> contratos) async {
     final pdf = pw.Document();
     pdf.addPage(
@@ -103,13 +105,44 @@ class ReportService {
   }
 
   pw.Widget _construirSecaoContrato(Map<String, dynamic> contrato) {
+    final List<dynamic> gestores = contrato['gestores'] ?? [];
+    final List<dynamic> fiscais = contrato['fiscais'] ?? [];
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(contrato['numero'] ?? 'Número não informado', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 12),
         pw.Text('Objeto: ${contrato['objeto'] ?? 'Não informado'}'),
+        pw.Text('Processo SEI: ${contrato['processoSei'] ?? 'Não informado'}'),
+        pw.Text('Valor: R\$ ${contrato['valorContrato'] ?? 'Não informado'}'),
+        pw.Text('Vigência: ${contrato['vigenciaInicio'] ?? ''} a ${contrato['vigenciaFim'] ?? ''}'),
         pw.Text('Status: ${contrato['status'] ?? 'Não informado'}'),
+        pw.SizedBox(height: 12),
+        pw.Text('Contratada:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(left: 10),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(contrato['contratadaRazaoSocial'] ?? 'Não informado'),
+              pw.Text('CNPJ: ${contrato['contratadaCnpj'] ?? 'Não informado'}'),
+            ]),
+        ),
+        pw.SizedBox(height: 12),
+        pw.Text('Responsáveis:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(left: 10),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Gestores:'),
+              ...gestores.map((g) => pw.Text('- ${g['nome'] ?? ''} (Portaria: ${g['portaria'] ?? ''})')),
+              pw.SizedBox(height: 5),
+              pw.Text('Fiscais:'),
+              ...fiscais.map((f) => pw.Text('- ${f['nome'] ?? ''} (Portaria: ${f['portaria'] ?? ''})')),
+            ]),
+        ),
       ],
     );
   }

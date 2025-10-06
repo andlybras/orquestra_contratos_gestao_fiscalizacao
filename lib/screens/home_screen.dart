@@ -40,10 +40,15 @@ class _HomeScreenState extends State<HomeScreen> {
     await _databaseService.salvarContratos(_listaDeContratos);
   }
 
-  void _navegarParaAdicionarEditarContrato({Map<String, dynamic>? contrato, int? index}) {
+  void _navegarParaAdicionarEditarContrato({
+    Map<String, dynamic>? contrato,
+    int? index,
+  }) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddContractScreen(contratoInicial: contrato)),
+      MaterialPageRoute(
+        builder: (context) => AddContractScreen(contratoInicial: contrato),
+      ),
     ).then((dadosRetornados) {
       if (dadosRetornados != null) {
         // A estrutura dos dados retornados agora é muito mais rica,
@@ -80,7 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       contrato: contrato,
                       onUpdate: (novasOcorrencias) {
                         setState(() {
-                          _listaDeContratos[index]['ocorrencias'] = novasOcorrencias;
+                          _listaDeContratos[index]['ocorrencias'] =
+                              novasOcorrencias;
                         });
                         _salvarDados();
                       },
@@ -93,7 +99,10 @@ class _HomeScreenState extends State<HomeScreen> {
             SimpleDialogOption(
               onPressed: () {
                 Navigator.pop(context);
-                _navegarParaAdicionarEditarContrato(contrato: contrato, index: index);
+                _navegarParaAdicionarEditarContrato(
+                  contrato: contrato,
+                  index: index,
+                );
               },
               child: const Text('Editar'),
             ),
@@ -116,9 +125,14 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmar Exclusão'),
-          content: const Text('Você tem certeza que deseja excluir este contrato?'),
+          content: const Text(
+            'Você tem certeza que deseja excluir este contrato?',
+          ),
           actions: <Widget>[
-            TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.of(context).pop()),
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             TextButton(
               child: const Text('Excluir', style: TextStyle(color: Colors.red)),
               onPressed: () {
@@ -143,7 +157,9 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.picture_as_pdf),
             tooltip: 'Relatório Geral (PDF)',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gerando relatório...')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gerando relatório...')),
+              );
               _reportService.gerarRelatorioPDF(_listaDeContratos);
             },
           ),
@@ -151,7 +167,9 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.archive),
             tooltip: 'Dossiê Geral (.zip)',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gerando Dossiê .zip...')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gerando Dossiê .zip...')),
+              );
               _reportService.gerarDossieCompleto(_listaDeContratos);
             },
           ),
@@ -160,26 +178,54 @@ class _HomeScreenState extends State<HomeScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _listaDeContratos.isEmpty
-              ? const Center(
-                  child: Text('Nenhum contrato cadastrado.\nClique no botão + para começar.', textAlign: TextAlign.center),
-                )
-              : ListView.builder(
-                  itemCount: _listaDeContratos.length,
-                  itemBuilder: (context, index) {
-                    final contrato = _listaDeContratos[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: ListTile(
-                        leading: const Icon(Icons.article),
-                        title: Text(contrato['numero'] ?? 'Sem número'),
-                        // Exibindo a razão social da contratada no subtítulo
-                        subtitle: Text(contrato['contratadaRazaoSocial'] ?? 'Sem objeto'),
-                        trailing: const Icon(Icons.more_vert),
-                        onTap: () => _mostrarOpcoes(context, index),
+          ? const Center(
+              child: Text(
+                'Nenhum contrato cadastrado.\nClique no botão + para começar.',
+                textAlign: TextAlign.center,
+              ),
+            )
+          : ListView.builder(
+              itemCount: _listaDeContratos.length,
+              itemBuilder: (context, index) {
+                final contrato = _listaDeContratos[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                    leading: const Icon(Icons.article, size: 40),
+                    title: Text(
+                      contrato['numero'] ?? 'Sem número',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(contrato['objeto'] ?? 'Sem objeto'),
+                        const SizedBox(height: 2),
+                        Text(
+                          contrato['contratadaRazaoSocial'] ?? 'Sem contratada',
+                          // A CORREÇÃO ESTÁ AQUI:
+                          style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                    trailing: Chip(
+                      label: Text(
+                        contrato['status'] ?? 'N/A',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
-                    );
-                  },
-                ),
+                      backgroundColor: (contrato['status'] == 'Ativo') ? Colors.green : Colors.grey,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    onTap: () => _mostrarOpcoes(context, index),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navegarParaAdicionarEditarContrato(),
         child: const Icon(Icons.add),
