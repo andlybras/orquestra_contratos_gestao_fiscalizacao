@@ -29,24 +29,25 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     _ocorrencias = List.from(widget.contrato['ocorrencias'] ?? []);
   }
 
-  // Widget auxiliar para criar linhas de detalhe e evitar repetição
-  Widget _buildDetailRow(String label, String? value) {
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
+  Icon _getIconForOccurrenceType(String? tipo) {
+    switch (tipo) {
+      case 'Vistoria/Acompanhamento':
+        return const Icon(Icons.visibility);
+      case 'Recebimento Provisório':
+        return const Icon(Icons.inventory_2_outlined);
+      case 'Recebimento Definitivo':
+        return const Icon(Icons.inventory);
+      case 'Atesto de Nota Fiscal':
+        return const Icon(Icons.receipt_long);
+      case 'Irregularidade/Pendência':
+        return const Icon(Icons.warning, color: Colors.orange);
+      default:
+        return const Icon(Icons.comment);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Extraindo as listas de gestores e fiscais para facilitar o uso
     final List<dynamic> gestores = widget.contrato['gestores'] ?? [];
     final List<dynamic> fiscais = widget.contrato['fiscais'] ?? [];
 
@@ -72,11 +73,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           ),
         ],
       ),
-      // O corpo agora é um ListView para garantir que a tela seja rolável
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // Seção de Detalhes Gerais
           const Text('Detalhes Gerais', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(),
           _buildDetailRow('Processo SEI', widget.contrato['processoSei']),
@@ -86,38 +85,29 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           _buildDetailRow('Vigência', '${widget.contrato['vigenciaInicio'] ?? ''} a ${widget.contrato['vigenciaFim'] ?? ''}'),
           _buildDetailRow('Status', widget.contrato['status']),
           const SizedBox(height: 24),
-
-          // Seção da Contratada
           const Text('Contratada', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(),
           _buildDetailRow('Razão Social', widget.contrato['contratadaRazaoSocial']),
           _buildDetailRow('CNPJ', widget.contrato['contratadaCnpj']),
           const SizedBox(height: 24),
-
-          // Seção de Responsáveis (Gestores e Fiscais)
           const Text('Responsáveis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(),
           const Text('Gestores:', style: TextStyle(fontWeight: FontWeight.bold)),
-          // Mapeia a lista de gestores para uma lista de widgets
           ...gestores.map((gestor) => Card(
-            child: ListTile(
-              title: Text(gestor['nome'] ?? 'Nome não informado'),
-              subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}'),
-            ),
-          )).toList(),
+                child: ListTile(
+                  title: Text(gestor['nome'] ?? 'Nome não informado'),
+                  subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}'),
+                ),
+              )).toList(),
           const SizedBox(height: 16),
           const Text('Fiscais:', style: TextStyle(fontWeight: FontWeight.bold)),
-          // Mapeia a lista de fiscais para uma lista de widgets
           ...fiscais.map((fiscal) => Card(
-            child: ListTile(
-              title: Text(fiscal['nome'] ?? 'Nome não informado'),
-              subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}'),
-            ),
-          )).toList(),
-          
+                child: ListTile(
+                  title: Text(fiscal['nome'] ?? 'Nome não informado'),
+                  subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}'),
+                ),
+              )).toList(),
           const Divider(height: 40, thickness: 2),
-
-          // Seção de Ocorrências
           const Text('Ocorrências Registradas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           const SizedBox(height: 16),
           _ocorrencias.isEmpty
@@ -129,9 +119,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   children: _ocorrencias.map((ocorrencia) {
                     return Card(
                       child: ListTile(
+                        leading: _getIconForOccurrenceType(ocorrencia['tipo']),
                         title: Text(ocorrencia['titulo']!),
-                        subtitle: Text(ocorrencia['descricao']!, overflow: TextOverflow.ellipsis),
-                        trailing: Text(ocorrencia['data']!),
+                        subtitle: Text(ocorrencia['tipo'] ?? 'Ocorrência'),
+                        trailing: const Icon(Icons.arrow_right),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -160,6 +151,20 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           }
         },
         child: const Icon(Icons.add_comment),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String? value) {
+    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text(value)),
+        ],
       ),
     );
   }
