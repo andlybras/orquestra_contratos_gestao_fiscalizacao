@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/responsible_management_screen.dart';
 
 class AddContractScreen extends StatefulWidget {
-  // O contrato agora é opcional. Se ele for passado, estamos em modo de edição.
   final Map<String, dynamic>? contratoInicial;
 
   const AddContractScreen({super.key, this.contratoInicial});
@@ -27,11 +26,15 @@ class _AddContractScreenState extends State<AddContractScreen> {
   final _contratadaRazaoSocialController = TextEditingController();
   final _contratadaCnpjController = TextEditingController();
 
-  // As listas de gestores e fiscais agora são parte do estado do formulário
+  // Listas de responsáveis
   List<Map<String, dynamic>> _gestores = [];
   List<Map<String, dynamic>> _fiscais = [];
 
   bool _ehEdicao = false;
+
+  // Variáveis para o status
+  final List<String> _listaDeStatus = ['Ativo', 'Encerrado', 'Suspenso', 'Cancelado'];
+  String? _statusSelecionado;
 
   @override
   void initState() {
@@ -47,14 +50,12 @@ class _AddContractScreenState extends State<AddContractScreen> {
       _valorContratoController.text = widget.contratoInicial!['valorContrato'] ?? '';
       _contratadaRazaoSocialController.text = widget.contratoInicial!['contratadaRazaoSocial'] ?? '';
       _contratadaCnpjController.text = widget.contratoInicial!['contratadaCnpj'] ?? '';
-
-      // Preenche as listas de gestores e fiscais com os dados existentes
-      if (widget.contratoInicial!['gestores'] != null) {
-        _gestores = List<Map<String, dynamic>>.from(widget.contratoInicial!['gestores']);
-      }
-      if (widget.contratoInicial!['fiscais'] != null) {
-        _fiscais = List<Map<String, dynamic>>.from(widget.contratoInicial!['fiscais']);
-      }
+      _gestores = List<Map<String, dynamic>>.from(widget.contratoInicial!['gestores'] ?? []);
+      _fiscais = List<Map<String, dynamic>>.from(widget.contratoInicial!['fiscais'] ?? []);
+      
+      _statusSelecionado = widget.contratoInicial!['status'] ?? 'Ativo';
+    } else {
+      _statusSelecionado = 'Ativo';
     }
   }
 
@@ -72,7 +73,6 @@ class _AddContractScreenState extends State<AddContractScreen> {
     super.dispose();
   }
 
-  // Função para navegar para a tela de gerenciamento
   void _gerenciarResponsaveis(String tipo) async {
     final listaInicial = tipo == 'Gestores' ? _gestores : _fiscais;
     
@@ -111,6 +111,23 @@ class _AddContractScreenState extends State<AddContractScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'Status do Contrato', border: OutlineInputBorder()),
+                  value: _statusSelecionado,
+                  items: _listaDeStatus.map((String status) {
+                    return DropdownMenuItem<String>(
+                      value: status,
+                      child: Text(status),
+                    );
+                  }).toList(),
+                  onChanged: (String? novoValor) {
+                    setState(() {
+                      _statusSelecionado = novoValor;
+                    });
+                  },
+                  validator: (value) => value == null ? 'Selecione um status' : null,
+                ),
+                const SizedBox(height: 16),
                 TextFormField(controller: _numeroController, decoration: const InputDecoration(labelText: 'Número do Contrato', border: OutlineInputBorder()), validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null),
                 const SizedBox(height: 16),
                 TextFormField(controller: _objetoController, decoration: const InputDecoration(labelText: 'Objeto do Contrato', border: OutlineInputBorder()), maxLines: 3, validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null),
@@ -135,12 +152,9 @@ class _AddContractScreenState extends State<AddContractScreen> {
                 TextFormField(controller: _contratadaRazaoSocialController, decoration: const InputDecoration(labelText: 'Razão Social', border: OutlineInputBorder()), validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null),
                 const SizedBox(height: 16),
                 TextFormField(controller: _contratadaCnpjController, decoration: const InputDecoration(labelText: 'CNPJ', border: OutlineInputBorder())),
-                
                 const SizedBox(height: 24),
                 const Text('Responsáveis', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const Divider(),
-                
-                // Botão para gerenciar Gestores
                 ListTile(
                   leading: const Icon(Icons.manage_accounts),
                   title: const Text('Gestores'),
@@ -148,8 +162,6 @@ class _AddContractScreenState extends State<AddContractScreen> {
                   trailing: const Icon(Icons.edit),
                   onTap: () => _gerenciarResponsaveis('Gestores'),
                 ),
-
-                // Botão para gerenciar Fiscais
                 ListTile(
                   leading: const Icon(Icons.person_search),
                   title: const Text('Fiscais'),
@@ -157,13 +169,13 @@ class _AddContractScreenState extends State<AddContractScreen> {
                   trailing: const Icon(Icons.edit),
                   onTap: () => _gerenciarResponsaveis('Fiscais'),
                 ),
-
                 const SizedBox(height: 32),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       final dadosDoContrato = {
+                        'status': _statusSelecionado,
                         'numero': _numeroController.text,
                         'objeto': _objetoController.text,
                         'processoSei': _processoSeiController.text,
@@ -173,12 +185,8 @@ class _AddContractScreenState extends State<AddContractScreen> {
                         'valorContrato': _valorContratoController.text,
                         'contratadaRazaoSocial': _contratadaRazaoSocialController.text,
                         'contratadaCnpj': _contratadaCnpjController.text,
-                        
-                        // Adicionando as listas ao mapa de dados
                         'gestores': _gestores,
                         'fiscais': _fiscais,
-
-                        'status': _ehEdicao ? widget.contratoInicial!['status'] : 'Ativo',
                         'ocorrencias': _ehEdicao ? widget.contratoInicial!['ocorrencias'] : [],
                       };
                       Navigator.pop(context, dadosDoContrato);
