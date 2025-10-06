@@ -29,8 +29,27 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     _ocorrencias = List.from(widget.contrato['ocorrencias'] ?? []);
   }
 
+  // Widget auxiliar para criar linhas de detalhe e evitar repetição
+  Widget _buildDetailRow(String label, String? value) {
+    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Extraindo as listas de gestores e fiscais para facilitar o uso
+    final List<dynamic> gestores = widget.contrato['gestores'] ?? [];
+    final List<dynamic> fiscais = widget.contrato['fiscais'] ?? [];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.contrato['numero'] ?? 'Detalhes do Contrato'),
@@ -53,33 +72,59 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           ),
         ],
       ),
-      body: ListView( // Usamos ListView para garantir que a tela seja rolável
+      // O corpo agora é um ListView para garantir que a tela seja rolável
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          _buildDetailRow('Processo SEI:', widget.contrato['processoSei']),
-          _buildDetailRow('Objeto:', widget.contrato['objeto']),
-          _buildDetailRow('Valor:', widget.contrato['valorContrato']),
-          _buildDetailRow('Nota de Empenho:', widget.contrato['notaEmpenho']),
-          _buildDetailRow('Vigência:', '${widget.contrato['vigenciaInicio'] ?? ''} a ${widget.contrato['vigenciaFim'] ?? ''}'),
-          _buildDetailRow('Status:', widget.contrato['status']),
-          const SizedBox(height: 16),
-          const Text('Contratada', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          // Seção de Detalhes Gerais
+          const Text('Detalhes Gerais', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(),
-          _buildDetailRow('Razão Social:', widget.contrato['contratadaRazaoSocial']),
-          _buildDetailRow('CNPJ:', widget.contrato['contratadaCnpj']),
-          const SizedBox(height: 16),
-          const Text('Responsáveis', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          _buildDetailRow('Processo SEI', widget.contrato['processoSei']),
+          _buildDetailRow('Objeto', widget.contrato['objeto']),
+          _buildDetailRow('Valor', 'R\$ ${widget.contrato['valorContrato'] ?? ''}'),
+          _buildDetailRow('Nota de Empenho', widget.contrato['notaEmpenho']),
+          _buildDetailRow('Vigência', '${widget.contrato['vigenciaInicio'] ?? ''} a ${widget.contrato['vigenciaFim'] ?? ''}'),
+          _buildDetailRow('Status', widget.contrato['status']),
+          const SizedBox(height: 24),
+
+          // Seção da Contratada
+          const Text('Contratada', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(),
-          _buildDetailRow('Gestor:', widget.contrato['nomeGestor']),
-          _buildDetailRow('Fiscal:', widget.contrato['nomeFiscal']),
+          _buildDetailRow('Razão Social', widget.contrato['contratadaRazaoSocial']),
+          _buildDetailRow('CNPJ', widget.contrato['contratadaCnpj']),
+          const SizedBox(height: 24),
+
+          // Seção de Responsáveis (Gestores e Fiscais)
+          const Text('Responsáveis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Divider(),
+          const Text('Gestores:', style: TextStyle(fontWeight: FontWeight.bold)),
+          // Mapeia a lista de gestores para uma lista de widgets
+          ...gestores.map((gestor) => Card(
+            child: ListTile(
+              title: Text(gestor['nome'] ?? 'Nome não informado'),
+              subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}'),
+            ),
+          )).toList(),
+          const SizedBox(height: 16),
+          const Text('Fiscais:', style: TextStyle(fontWeight: FontWeight.bold)),
+          // Mapeia a lista de fiscais para uma lista de widgets
+          ...fiscais.map((fiscal) => Card(
+            child: ListTile(
+              title: Text(fiscal['nome'] ?? 'Nome não informado'),
+              subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}'),
+            ),
+          )).toList(),
           
           const Divider(height: 40, thickness: 2),
+
+          // Seção de Ocorrências
           const Text('Ocorrências Registradas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           const SizedBox(height: 16),
-          
-          // Se não houver ocorrências, exibe uma mensagem
           _ocorrencias.isEmpty
-              ? const Text('Nenhuma ocorrência registrada para este contrato.')
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text('Nenhuma ocorrência registrada para este contrato.'),
+                )
               : Column(
                   children: _ocorrencias.map((ocorrencia) {
                     return Card(
@@ -115,21 +160,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           }
         },
         child: const Icon(Icons.add_comment),
-      ),
-    );
-  }
-
-  // Widget auxiliar para criar linhas de detalhe e evitar repetição
-  Widget _buildDetailRow(String label, String? value) {
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
-        ],
       ),
     );
   }
