@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
+import 'package:flutter/services.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart'; // Import do novo pacote de compartilhamento
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ReportService {
 
@@ -13,7 +16,6 @@ class ReportService {
     await gerarRelatorioPDF([contrato]);
   }
 
-  // NOVO: Método para gerar o Dossiê de um único contrato
   Future<void> gerarDossieParaContratoUnico(Map<String, dynamic> contrato) async {
     await gerarDossieCompleto([contrato]);
   }
@@ -39,28 +41,33 @@ class ReportService {
       final List<dynamic>? ocorrencias = contrato['ocorrencias'];
       if (ocorrencias != null) {
         for (final ocorrencia in ocorrencias) {
+          // Itera sobre todos os tipos de mídia para adicionar ao ZIP
           final String? fotoPath = ocorrencia['foto_path'];
-          if (fotoPath != null) {
-            final file = File(fotoPath);
-            if (await file.exists()) {
-              final fileName = fotoPath.split('/').last;
-              encoder.addFile(file, 'Evidencias/$fileName');
-            }
-          }
+          final String? videoPath = ocorrencia['video_path'];
+          final String? audioPath = ocorrencia['audio_path'];
+
+          if (fotoPath != null) await _adicionarArquivoAoZip(encoder, fotoPath, 'Evidencias_Fotos');
+          if (videoPath != null) await _adicionarArquivoAoZip(encoder, videoPath, 'Evidencias_Videos');
+          if (audioPath != null) await _adicionarArquivoAoZip(encoder, audioPath, 'Evidencias_Audios');
         }
       }
     }
     
     encoder.close();
 
-    // A MUDANÇA ESTÁ AQUI: Usamos o Share.shareXFiles para compartilhar o ZIP
     final xFile = XFile(zipPath);
     await Share.shareXFiles([xFile], text: 'Dossiê de Contratos Gerado');
   }
 
-  // --- MÉTODOS PRIVADOS DE CONSTRUÇÃO DO PDF ---
-
-  // Refatoramos a criação do PDF para este método, para ser reutilizado
+  // Função auxiliar para adicionar arquivos ao ZIP de forma segura
+  Future<void> _adicionarArquivoAoZip(ZipFileEncoder encoder, String path, String dir) async {
+    final file = File(path);
+    if (await file.exists()) {
+      final fileName = path.split('/').last;
+      encoder.addFile(file, '$dir/$fileName');
+    }
+  }
+  
   Future<pw.Document> _criarDocumentoPDF(List<Map<String, dynamic>> contratos) async {
     final pdf = pw.Document();
     pdf.addPage(
@@ -132,26 +139,41 @@ class ReportService {
               children: [
                 pw.Text('- Título: ${ocorrencia['titulo'] ?? ''} (${ocorrencia['data'] ?? ''})'),
                 pw.Text('  Descrição: ${ocorrencia['descricao'] ?? ''}'),
+                
+                // QR Code para a Foto
                 if (ocorrencia['foto_path'] != null)
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.only(top: 8, left: 12),
-                    child: pw.Row(
-                      children: [
-                        pw.BarcodeWidget(
-                          barcode: pw.Barcode.qrCode(),
-                          data: Uri.file(ocorrencia['foto_path']).toString(),
-                          width: 40,
-                          height: 40,
-                        ),
-                        pw.SizedBox(width: 10),
-                        pw.Text('Anexo: Evidência fotográfica'),
-                      ],
-                    ),
-                  ),
+                  _buildQrCodeRow('Evidência fotográfica', ocorrencia['foto_path']),
+                
+                // NOVO: QR Code para o Vídeo
+                if (ocorrencia['video_path'] != null)
+                  _buildQrCodeRow('Evidência em vídeo', ocorrencia['video_path']),
+                
+                // NOVO: QR Code para o Áudio
+                if (ocorrencia['audio_path'] != null)
+                  _buildQrCodeRow('Evidência em áudio', ocorrencia['audio_path']),
               ],
             ),
           ),
       ],
+    );
+  }
+
+  // NOVO: Widget auxiliar para criar a linha do QR Code e evitar repetição de código
+  pw.Widget _buildQrCodeRow(String label, String data) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(top: 8, left: 12),
+      child: pw.Row(
+        children: [
+          pw.BarcodeWidget(
+            barcode: pw.Barcode.qrCode(),
+            data: Uri.file(data).toString(),
+            width: 40,
+            height: 40,
+          ),
+          pw.SizedBox(width: 10),
+          pw.Text('Anexo: $label'),
+        ],
+      ),
     );
   }
 }
