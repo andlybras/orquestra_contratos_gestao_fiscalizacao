@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/add_contract_screen.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/screens/contract_detail_screen.dart';
 import 'package:orquestra_contratos_gestao_fiscalizacao/services/database_service.dart';
-// Importamos nosso novo serviço de relatório
 import 'package:orquestra_contratos_gestao_fiscalizacao/services/report_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,8 +16,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _listaDeContratos = [];
   final _databaseService = DatabaseService();
-  // Criamos uma instância do nosso serviço de relatório
   final _reportService = ReportService();
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -27,11 +26,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _carregarDados() async {
+    setState(() => _isLoading = true);
     final contratosSalvos = await _databaseService.carregarContratos();
-    if (contratosSalvos.isEmpty && mounted) {
-      setState(() => _listaDeContratos = _getListaInicial());
-    } else if (mounted) {
-      setState(() => _listaDeContratos = contratosSalvos);
+    if (mounted) {
+      setState(() {
+        _listaDeContratos = contratosSalvos;
+        _isLoading = false;
+      });
     }
   }
 
@@ -111,18 +112,13 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmar Exclusão'),
-          content: const Text('Você tem certeza que deseja excluir este contrato e todas as suas ocorrências?'),
+          content: const Text('Você tem certeza que deseja excluir este contrato?'),
           actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.of(context).pop()),
             TextButton(
               child: const Text('Excluir', style: TextStyle(color: Colors.red)),
               onPressed: () {
-                setState(() {
-                  _listaDeContratos.removeAt(index);
-                });
+                setState(() => _listaDeContratos.removeAt(index));
                 _salvarDados();
                 Navigator.of(context).pop();
               },
@@ -133,78 +129,56 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Orquestra Contratos'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
         actions: [
-          // Botão para gerar o PDF (pré-visualização)
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'Pré-visualizar Relatório PDF',
+            tooltip: 'Relatório Geral (PDF)',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Gerando pré-visualização do relatório...')),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gerando relatório...')));
               _reportService.gerarRelatorioPDF(_listaDeContratos);
             },
           ),
-          // NOVO BOTÃO para gerar o Dossiê ZIP
           IconButton(
             icon: const Icon(Icons.archive),
-            tooltip: 'Exportar Dossiê Completo (.zip)',
+            tooltip: 'Dossiê Geral (.zip)',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Gerando Dossiê .zip...')),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gerando Dossiê .zip...')));
               _reportService.gerarDossieCompleto(_listaDeContratos);
             },
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: _listaDeContratos.length,
-        itemBuilder: (context, index) {
-          final contrato = _listaDeContratos[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: ListTile(
-              leading: const Icon(Icons.article),
-              title: Text(contrato['numero']!),
-              subtitle: Text(contrato['objeto']!),
-              trailing: const Icon(Icons.more_vert),
-              onTap: () => _mostrarOpcoes(context, index),
-            ),
-          );
-        },
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _listaDeContratos.isEmpty
+              ? const Center(
+                  child: Text('Nenhum contrato cadastrado.\nClique no botão + para começar.', textAlign: TextAlign.center),
+                )
+              : ListView.builder(
+                  itemCount: _listaDeContratos.length,
+                  itemBuilder: (context, index) {
+                    final contrato = _listaDeContratos[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: ListTile(
+                        leading: const Icon(Icons.article),
+                        title: Text(contrato['numero'] ?? 'Sem número'),
+                        subtitle: Text(contrato['objeto'] ?? 'Sem objeto'),
+                        trailing: const Icon(Icons.more_vert),
+                        onTap: () => _mostrarOpcoes(context, index),
+                      ),
+                    );
+                  },
+                ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navegarParaAdicionarEditarContrato(),
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  List<Map<String, dynamic>> _getListaInicial() {
-    return [
-      {
-        'numero': 'Contrato Nº 123/2025',
-        'objeto': 'Serviço de manutenção predial',
-        'status': 'Ativo',
-        'ocorrencias': [
-          {'titulo': 'Vistoria inicial', 'descricao': 'Tudo conforme o esperado.', 'data': '28/09/2025'}
-        ]
-      },
-      {
-        'numero': 'Contrato Nº 456/2025',
-        'objeto': 'Aquisição de equipamentos de TI',
-        'status': 'Ativo',
-        'ocorrencias': []
-      },
-    ];
   }
 }
