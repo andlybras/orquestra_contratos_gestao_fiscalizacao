@@ -46,10 +46,14 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (context) => AddContractScreen(contratoInicial: contrato)),
     ).then((dadosRetornados) {
       if (dadosRetornados != null) {
+        // A estrutura dos dados retornados agora é muito mais rica,
+        // mas a lógica de adicionar ou editar a lista principal não muda.
         setState(() {
           if (index != null) {
             _listaDeContratos[index] = dadosRetornados;
           } else {
+            // A estrutura de um novo contrato agora inclui listas vazias
+            // para gestores, fiscais, documentos, etc.
             _listaDeContratos.add(dadosRetornados);
           }
         });
@@ -168,7 +172,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ListTile(
                         leading: const Icon(Icons.article),
                         title: Text(contrato['numero'] ?? 'Sem número'),
-                        subtitle: Text(contrato['objeto'] ?? 'Sem objeto'),
+                        // Exibindo a razão social da contratada no subtítulo
+                        subtitle: Text(contrato['contratadaRazaoSocial'] ?? 'Sem objeto'),
                         trailing: const Icon(Icons.more_vert),
                         onTap: () => _mostrarOpcoes(context, index),
                       ),
