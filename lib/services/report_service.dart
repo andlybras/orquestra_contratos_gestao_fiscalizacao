@@ -3,7 +3,6 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:flutter/services.dart';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -13,6 +12,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ReportService {
+
   Future<void> gerarRelatorioParaContratoUnico(Map<String, dynamic> contrato) async {
     await gerarRelatorioPDF([contrato]);
   }
@@ -45,6 +45,7 @@ class ReportService {
           final String? fotoPath = ocorrencia['foto_path'];
           final String? videoPath = ocorrencia['video_path'];
           final String? audioPath = ocorrencia['audio_path'];
+
           if (fotoPath != null) await _adicionarArquivoAoZip(encoder, fotoPath, 'Evidencias_Fotos');
           if (videoPath != null) await _adicionarArquivoAoZip(encoder, videoPath, 'Evidencias_Videos');
           if (audioPath != null) await _adicionarArquivoAoZip(encoder, audioPath, 'Evidencias_Audios');
@@ -53,10 +54,11 @@ class ReportService {
     }
     
     encoder.close();
+
     final xFile = XFile(zipPath);
     await Share.shareXFiles([xFile], text: 'Dossiê de Contratos Gerado');
   }
-
+  
   Future<void> _adicionarArquivoAoZip(ZipFileEncoder encoder, String path, String dir) async {
     final file = File(path);
     if (await file.exists()) {
@@ -64,7 +66,7 @@ class ReportService {
       encoder.addFile(file, '$dir/$fileName');
     }
   }
-
+  
   Future<pw.Document> _criarDocumentoPDF(List<Map<String, dynamic>> contratos) async {
     final pdf = pw.Document();
     pdf.addPage(
@@ -166,7 +168,13 @@ class ReportService {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text('- Ocorrência #${ocorrencia['id'] ?? ''}: ${ocorrencia['titulo'] ?? ''} (${ocorrencia['data'] ?? ''})'),
+                pw.Text('  Tipo: ${ocorrencia['tipo'] ?? 'Não informado'}'),
                 pw.Text('  Descrição: ${ocorrencia['descricao'] ?? ''}'),
+                
+                // ADIÇÃO DA GEOLOCALIZAÇÃO NO PDF
+                if (ocorrencia['latitude'] != null && ocorrencia['longitude'] != null)
+                  pw.Text('  Localização: Lat ${ocorrencia['latitude']}, Lon ${ocorrencia['longitude']}'),
+
                 if (ocorrencia['foto_path'] != null)
                   _buildImagem(ocorrencia['foto_path']),
                 if (ocorrencia['video_path'] != null)
