@@ -109,7 +109,7 @@ class _AddOccurrenceScreenState extends State<AddOccurrenceScreen> {
                     labelText: 'Tipo de Ocorrência',
                     border: OutlineInputBorder(),
                   ),
-                  value: _tipoOcorrenciaSelecionado,
+                  initialValue: _tipoOcorrenciaSelecionado,
                   items: _tiposDeOcorrencia.map((String tipo) {
                     return DropdownMenuItem<String>(
                       value: tipo,

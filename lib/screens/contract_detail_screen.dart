@@ -98,7 +98,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   title: Text(gestor['nome'] ?? 'Nome não informado'),
                   subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}'),
                 ),
-              )).toList(),
+              )),
           const SizedBox(height: 16),
           const Text('Fiscais:', style: TextStyle(fontWeight: FontWeight.bold)),
           ...fiscais.map((fiscal) => Card(
@@ -106,7 +106,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   title: Text(fiscal['nome'] ?? 'Nome não informado'),
                   subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}'),
                 ),
-              )).toList(),
+              )),
           const Divider(height: 40, thickness: 2),
           const Text('Ocorrências Registradas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           const SizedBox(height: 16),

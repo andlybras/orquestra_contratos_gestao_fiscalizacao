@@ -1,13 +1,13 @@
+// CÓDIGO COMPLETO E CORRIGIDO PARA: services/report_service.dart
+
 import 'dart:io';
 import 'package:archive/archive_io.dart';
-import 'package:flutter/services.dart';
-import 'package:open_file/open_file.dart';
+// IMPORT ADICIONADO AQUI:
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ReportService {
@@ -41,7 +41,6 @@ class ReportService {
       final List<dynamic>? ocorrencias = contrato['ocorrencias'];
       if (ocorrencias != null) {
         for (final ocorrencia in ocorrencias) {
-          // Itera sobre todos os tipos de mídia para adicionar ao ZIP
           final String? fotoPath = ocorrencia['foto_path'];
           final String? videoPath = ocorrencia['video_path'];
           final String? audioPath = ocorrencia['audio_path'];
@@ -58,8 +57,7 @@ class ReportService {
     final xFile = XFile(zipPath);
     await Share.shareXFiles([xFile], text: 'Dossiê de Contratos Gerado');
   }
-
-  // Função auxiliar para adicionar arquivos ao ZIP de forma segura
+  
   Future<void> _adicionarArquivoAoZip(ZipFileEncoder encoder, String path, String dir) async {
     final file = File(path);
     if (await file.exists()) {
@@ -139,16 +137,10 @@ class ReportService {
               children: [
                 pw.Text('- Título: ${ocorrencia['titulo'] ?? ''} (${ocorrencia['data'] ?? ''})'),
                 pw.Text('  Descrição: ${ocorrencia['descricao'] ?? ''}'),
-                
-                // QR Code para a Foto
                 if (ocorrencia['foto_path'] != null)
                   _buildQrCodeRow('Evidência fotográfica', ocorrencia['foto_path']),
-                
-                // NOVO: QR Code para o Vídeo
                 if (ocorrencia['video_path'] != null)
                   _buildQrCodeRow('Evidência em vídeo', ocorrencia['video_path']),
-                
-                // NOVO: QR Code para o Áudio
                 if (ocorrencia['audio_path'] != null)
                   _buildQrCodeRow('Evidência em áudio', ocorrencia['audio_path']),
               ],
@@ -158,7 +150,6 @@ class ReportService {
     );
   }
 
-  // NOVO: Widget auxiliar para criar a linha do QR Code e evitar repetição de código
   pw.Widget _buildQrCodeRow(String label, String data) {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(top: 8, left: 12),
