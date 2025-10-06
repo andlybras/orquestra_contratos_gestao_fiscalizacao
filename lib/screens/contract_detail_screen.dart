@@ -9,11 +9,7 @@ class ContractDetailScreen extends StatefulWidget {
   final Map<String, dynamic> contrato;
   final Function(List<dynamic>) onUpdate;
 
-  const ContractDetailScreen({
-    super.key,
-    required this.contrato,
-    required this.onUpdate,
-  });
+  const ContractDetailScreen({super.key, required this.contrato, required this.onUpdate});
 
   @override
   State<ContractDetailScreen> createState() => _ContractDetailScreenState();
@@ -29,23 +25,40 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     _ocorrencias = List.from(widget.contrato['ocorrencias'] ?? []);
   }
 
-  Icon _getIconForOccurrenceType(String? tipo) {
-    switch (tipo) {
-      case 'Vistoria/Acompanhamento':
-        return const Icon(Icons.visibility);
-      case 'Recebimento Provisório':
-        return const Icon(Icons.inventory_2_outlined);
-      case 'Recebimento Definitivo':
-        return const Icon(Icons.inventory);
-      case 'Atesto de Nota Fiscal':
-        return const Icon(Icons.receipt_long);
-      case 'Irregularidade/Pendência':
-        return const Icon(Icons.warning, color: Colors.orange);
-      default:
-        return const Icon(Icons.comment);
+  void _navegarParaAdicionarEditarOcorrencia({Map<String, dynamic>? ocorrencia, int? index}) async {
+    final dadosRetornados = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddOccurrenceScreen(ocorrenciaInicial: ocorrencia)),
+    );
+
+    if (dadosRetornados != null) {
+      setState(() {
+        if (index != null) {
+          // Editando um rascunho existente
+          _ocorrencias[index] = dadosRetornados;
+        } else {
+          // Adicionando uma nova ocorrência
+          int proximoId = widget.contrato['proximoIdOcorrencia'] ?? 1;
+          dadosRetornados['id'] = proximoId;
+          _ocorrencias.add(dadosRetornados);
+          widget.contrato['proximoIdOcorrencia'] = proximoId + 1;
+        }
+        widget.onUpdate(_ocorrencias);
+      });
     }
   }
   
+  Icon _getIconForOccurrenceType(String? tipo) {
+    switch (tipo) {
+      case 'Vistoria/Acompanhamento': return const Icon(Icons.visibility);
+      case 'Recebimento Provisório': return const Icon(Icons.inventory_2_outlined);
+      case 'Recebimento Definitivo': return const Icon(Icons.inventory);
+      case 'Atesto de Nota Fiscal': return const Icon(Icons.receipt_long);
+      case 'Irregularidade/Pendência': return const Icon(Icons.warning, color: Colors.orange);
+      default: return const Icon(Icons.comment);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<dynamic> gestores = widget.contrato['gestores'] ?? [];
@@ -93,43 +106,41 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           const Text('Responsáveis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(),
           const Text('Gestores:', style: TextStyle(fontWeight: FontWeight.bold)),
-          ...gestores.map((gestor) => Card(
-            child: ListTile(
-              title: Text(gestor['nome'] ?? 'Nome não informado'),
-              subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}'),
-            ),
-          )).toList(),
+          ...gestores.map((gestor) => Card(child: ListTile(title: Text(gestor['nome'] ?? ''), subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}')))).toList(),
           const SizedBox(height: 16),
           const Text('Fiscais:', style: TextStyle(fontWeight: FontWeight.bold)),
-          ...fiscais.map((fiscal) => Card(
-            child: ListTile(
-              title: Text(fiscal['nome'] ?? 'Nome não informado'),
-              subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}'),
-            ),
-          )).toList(),
+          ...fiscais.map((fiscal) => Card(child: ListTile(title: Text(fiscal['nome'] ?? ''), subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}')))).toList(),
           const Divider(height: 40, thickness: 2),
           const Text('Ocorrências Registradas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           const SizedBox(height: 16),
           _ocorrencias.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text('Nenhuma ocorrência registrada para este contrato.'),
-                )
+              ? const Padding(padding: EdgeInsets.symmetric(vertical: 16.0), child: Text('Nenhuma ocorrência registrada para este contrato.'))
               : Column(
-                  children: _ocorrencias.map((ocorrencia) {
+                  children: _ocorrencias.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    Map<String, dynamic> ocorrencia = entry.value;
+                    bool ehRascunho = ocorrencia['status_ocorrencia'] == 'Rascunho';
+
                     return Card(
+                      color: ehRascunho ? Colors.yellow[100] : null,
                       child: ListTile(
                         leading: _getIconForOccurrenceType(ocorrencia['tipo']),
                         title: Text('Ocorrência #${ocorrencia['id'] ?? ''}: ${ocorrencia['titulo']!}'),
-                        subtitle: Text(ocorrencia['tipo'] ?? 'Ocorrência'),
-                        trailing: const Icon(Icons.arrow_right),
+                        subtitle: Text(ehRascunho ? 'RASCUNHO - ${ocorrencia['tipo']}' : ocorrencia['tipo'] ?? 'Ocorrência', style: TextStyle(fontWeight: ehRascunho ? FontWeight.bold : FontWeight.normal)),
+                        trailing: ehRascunho
+                            ? IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () {
+                                setState(() {
+                                  _ocorrencias.removeAt(index);
+                                  widget.onUpdate(_ocorrencias);
+                                });
+                              })
+                            : const Icon(Icons.lock_outline, color: Colors.grey),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OccurrenceDetailScreen(ocorrencia: ocorrencia),
-                            ),
-                          );
+                          if (ehRascunho) {
+                            _navegarParaAdicionarEditarOcorrencia(ocorrencia: ocorrencia, index: index);
+                          } else {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => OccurrenceDetailScreen(ocorrencia: ocorrencia)));
+                          }
                         },
                       ),
                     );
@@ -138,21 +149,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final novaOcorrenciaSemId = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddOccurrenceScreen()),
-          );
-          if (novaOcorrenciaSemId != null) {
-            setState(() {
-              int proximoId = widget.contrato['proximoIdOcorrencia'] ?? 1;
-              novaOcorrenciaSemId['id'] = proximoId;
-              _ocorrencias.add(novaOcorrenciaSemId);
-              widget.contrato['proximoIdOcorrencia'] = proximoId + 1;
-              widget.onUpdate(_ocorrencias);
-            });
-          }
-        },
+        onPressed: () => _navegarParaAdicionarEditarOcorrencia(),
         child: const Icon(Icons.add_comment),
       ),
     );

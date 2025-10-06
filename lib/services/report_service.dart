@@ -41,7 +41,9 @@ class ReportService {
     for (final contrato in contratos) {
       final List<dynamic>? ocorrencias = contrato['ocorrencias'];
       if (ocorrencias != null) {
-        for (final ocorrencia in ocorrencias) {
+        // Filtra para pegar apenas ocorrências definitivas para o ZIP
+        final ocorrenciasDefinitivas = ocorrencias.where((o) => o['status_ocorrencia'] == 'Definitivo').toList();
+        for (final ocorrencia in ocorrenciasDefinitivas) {
           final String? fotoPath = ocorrencia['foto_path'];
           final String? videoPath = ocorrencia['video_path'];
           final String? audioPath = ocorrencia['audio_path'];
@@ -153,15 +155,25 @@ class ReportService {
         child: pw.Text('Nenhuma ocorrência registrada.', style: pw.TextStyle(fontStyle: pw.FontStyle.italic)),
       );
     }
+    
+    final ocorrenciasDefinitivas = ocorrencias.where((o) => o['status_ocorrencia'] == 'Definitivo').toList();
+
+    if (ocorrenciasDefinitivas.isEmpty) {
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(left: 15, top: 10),
+        child: pw.Text('Nenhuma ocorrência definitiva registrada.', style: pw.TextStyle(fontStyle: pw.FontStyle.italic)),
+      );
+    }
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Padding(
           padding: const pw.EdgeInsets.only(left: 15),
-          child: pw.Text('Ocorrências:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          child: pw.Text('Ocorrências (Definitivas):', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
         ),
         pw.SizedBox(height: 5),
-        for (final ocorrencia in ocorrencias)
+        for (final ocorrencia in ocorrenciasDefinitivas)
           pw.Container(
             padding: const pw.EdgeInsets.only(left: 30, bottom: 15),
             child: pw.Column(
@@ -170,11 +182,8 @@ class ReportService {
                 pw.Text('- Ocorrência #${ocorrencia['id'] ?? ''}: ${ocorrencia['titulo'] ?? ''} (${ocorrencia['data'] ?? ''})'),
                 pw.Text('  Tipo: ${ocorrencia['tipo'] ?? 'Não informado'}'),
                 pw.Text('  Descrição: ${ocorrencia['descricao'] ?? ''}'),
-                
-                // ADIÇÃO DA GEOLOCALIZAÇÃO NO PDF
                 if (ocorrencia['latitude'] != null && ocorrencia['longitude'] != null)
                   pw.Text('  Localização: Lat ${ocorrencia['latitude']}, Lon ${ocorrencia['longitude']}'),
-
                 if (ocorrencia['foto_path'] != null)
                   _buildImagem(ocorrencia['foto_path']),
                 if (ocorrencia['video_path'] != null)
