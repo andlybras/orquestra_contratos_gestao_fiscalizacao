@@ -15,7 +15,6 @@ class AddContractScreen extends StatefulWidget {
 class _AddContractScreenState extends State<AddContractScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers para os campos de texto
   final _numeroController = TextEditingController();
   final _objetoController = TextEditingController();
   final _processoSeiController = TextEditingController();
@@ -26,13 +25,11 @@ class _AddContractScreenState extends State<AddContractScreen> {
   final _contratadaRazaoSocialController = TextEditingController();
   final _contratadaCnpjController = TextEditingController();
 
-  // Listas de responsáveis
   List<Map<String, dynamic>> _gestores = [];
   List<Map<String, dynamic>> _fiscais = [];
 
   bool _ehEdicao = false;
 
-  // Variáveis para o status
   final List<String> _listaDeStatus = ['Ativo', 'Encerrado', 'Suspenso', 'Cancelado'];
   String? _statusSelecionado;
 
@@ -52,7 +49,6 @@ class _AddContractScreenState extends State<AddContractScreen> {
       _contratadaCnpjController.text = widget.contratoInicial!['contratadaCnpj'] ?? '';
       _gestores = List<Map<String, dynamic>>.from(widget.contratoInicial!['gestores'] ?? []);
       _fiscais = List<Map<String, dynamic>>.from(widget.contratoInicial!['fiscais'] ?? []);
-      
       _statusSelecionado = widget.contratoInicial!['status'] ?? 'Ativo';
     } else {
       _statusSelecionado = 'Ativo';
@@ -75,7 +71,6 @@ class _AddContractScreenState extends State<AddContractScreen> {
 
   void _gerenciarResponsaveis(String tipo) async {
     final listaInicial = tipo == 'Gestores' ? _gestores : _fiscais;
-    
     final listaAtualizada = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -85,7 +80,6 @@ class _AddContractScreenState extends State<AddContractScreen> {
         ),
       ),
     );
-
     if (listaAtualizada != null) {
       setState(() {
         if (tipo == 'Gestores') {
@@ -115,16 +109,9 @@ class _AddContractScreenState extends State<AddContractScreen> {
                   decoration: const InputDecoration(labelText: 'Status do Contrato', border: OutlineInputBorder()),
                   value: _statusSelecionado,
                   items: _listaDeStatus.map((String status) {
-                    return DropdownMenuItem<String>(
-                      value: status,
-                      child: Text(status),
-                    );
+                    return DropdownMenuItem<String>(value: status, child: Text(status));
                   }).toList(),
-                  onChanged: (String? novoValor) {
-                    setState(() {
-                      _statusSelecionado = novoValor;
-                    });
-                  },
+                  onChanged: (String? novoValor) => setState(() => _statusSelecionado = novoValor),
                   validator: (value) => value == null ? 'Selecione um status' : null,
                 ),
                 const SizedBox(height: 16),
@@ -188,6 +175,7 @@ class _AddContractScreenState extends State<AddContractScreen> {
                         'gestores': _gestores,
                         'fiscais': _fiscais,
                         'ocorrencias': _ehEdicao ? widget.contratoInicial!['ocorrencias'] : [],
+                        'proximoIdOcorrencia': _ehEdicao ? widget.contratoInicial!['proximoIdOcorrencia'] : 1,
                       };
                       Navigator.pop(context, dadosDoContrato);
                     }

@@ -45,7 +45,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         return const Icon(Icons.comment);
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     final List<dynamic> gestores = widget.contrato['gestores'] ?? [];
@@ -94,19 +94,19 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           const Divider(),
           const Text('Gestores:', style: TextStyle(fontWeight: FontWeight.bold)),
           ...gestores.map((gestor) => Card(
-                child: ListTile(
-                  title: Text(gestor['nome'] ?? 'Nome não informado'),
-                  subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}'),
-                ),
-              )),
+            child: ListTile(
+              title: Text(gestor['nome'] ?? 'Nome não informado'),
+              subtitle: Text('CPF: ${gestor['cpf'] ?? ''} | Portaria: ${gestor['portaria'] ?? ''}'),
+            ),
+          )).toList(),
           const SizedBox(height: 16),
           const Text('Fiscais:', style: TextStyle(fontWeight: FontWeight.bold)),
           ...fiscais.map((fiscal) => Card(
-                child: ListTile(
-                  title: Text(fiscal['nome'] ?? 'Nome não informado'),
-                  subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}'),
-                ),
-              )),
+            child: ListTile(
+              title: Text(fiscal['nome'] ?? 'Nome não informado'),
+              subtitle: Text('CPF: ${fiscal['cpf'] ?? ''} | Portaria: ${fiscal['portaria'] ?? ''}'),
+            ),
+          )).toList(),
           const Divider(height: 40, thickness: 2),
           const Text('Ocorrências Registradas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           const SizedBox(height: 16),
@@ -120,7 +120,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                     return Card(
                       child: ListTile(
                         leading: _getIconForOccurrenceType(ocorrencia['tipo']),
-                        title: Text(ocorrencia['titulo']!),
+                        title: Text('Ocorrência #${ocorrencia['id'] ?? ''}: ${ocorrencia['titulo']!}'),
                         subtitle: Text(ocorrencia['tipo'] ?? 'Ocorrência'),
                         trailing: const Icon(Icons.arrow_right),
                         onTap: () {
@@ -139,13 +139,16 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final novaOcorrencia = await Navigator.push(
+          final novaOcorrenciaSemId = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddOccurrenceScreen()),
           );
-          if (novaOcorrencia != null) {
+          if (novaOcorrenciaSemId != null) {
             setState(() {
-              _ocorrencias.add(novaOcorrencia);
+              int proximoId = widget.contrato['proximoIdOcorrencia'] ?? 1;
+              novaOcorrenciaSemId['id'] = proximoId;
+              _ocorrencias.add(novaOcorrenciaSemId);
+              widget.contrato['proximoIdOcorrencia'] = proximoId + 1;
               widget.onUpdate(_ocorrencias);
             });
           }

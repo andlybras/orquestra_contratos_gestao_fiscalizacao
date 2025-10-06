@@ -14,8 +14,7 @@ import 'package:share_plus/share_plus.dart';
 
 class ReportService {
   Future<void> gerarRelatorioParaContratoUnico(Map<String, dynamic> contrato) async {
-    final List<Map<String, dynamic>> listaDeUmContrato = [contrato];
-    await gerarRelatorioPDF(listaDeUmContrato);
+    await gerarRelatorioPDF([contrato]);
   }
 
   Future<void> gerarDossieParaContratoUnico(Map<String, dynamic> contrato) async {
@@ -46,16 +45,14 @@ class ReportService {
           final String? fotoPath = ocorrencia['foto_path'];
           final String? videoPath = ocorrencia['video_path'];
           final String? audioPath = ocorrencia['audio_path'];
-
           if (fotoPath != null) await _adicionarArquivoAoZip(encoder, fotoPath, 'Evidencias_Fotos');
           if (videoPath != null) await _adicionarArquivoAoZip(encoder, videoPath, 'Evidencias_Videos');
           if (audioPath != null) await _adicionarArquivoAoZip(encoder, audioPath, 'Evidencias_Audios');
         }
       }
     }
-
+    
     encoder.close();
-
     final xFile = XFile(zipPath);
     await Share.shareXFiles([xFile], text: 'Dossiê de Contratos Gerado');
   }
@@ -168,10 +165,10 @@ class ReportService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('- Título: ${ocorrencia['titulo'] ?? ''} (${ocorrencia['data'] ?? ''})'),
+                pw.Text('- Ocorrência #${ocorrencia['id'] ?? ''}: ${ocorrencia['titulo'] ?? ''} (${ocorrencia['data'] ?? ''})'),
                 pw.Text('  Descrição: ${ocorrencia['descricao'] ?? ''}'),
                 if (ocorrencia['foto_path'] != null)
-                  _buildQrCodeRow('Evidência fotográfica', ocorrencia['foto_path']),
+                  _buildImagem(ocorrencia['foto_path']),
                 if (ocorrencia['video_path'] != null)
                   _buildQrCodeRow('Evidência em vídeo', ocorrencia['video_path']),
                 if (ocorrencia['audio_path'] != null)
@@ -181,6 +178,26 @@ class ReportService {
           ),
       ],
     );
+  }
+  
+  pw.Widget _buildImagem(String path) {
+    final file = File(path);
+    if (file.existsSync()) {
+      final imageBytes = file.readAsBytesSync();
+      final image = pw.MemoryImage(imageBytes);
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(top: 8, left: 12),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text('Anexo: Evidência fotográfica', style: const pw.TextStyle(fontStyle: pw.FontStyle.italic)),
+            pw.SizedBox(height: 5),
+            pw.Image(image, height: 250, fit: pw.BoxFit.contain),
+          ]
+        )
+      );
+    }
+    return pw.Container();
   }
 
   pw.Widget _buildQrCodeRow(String label, String data) {
