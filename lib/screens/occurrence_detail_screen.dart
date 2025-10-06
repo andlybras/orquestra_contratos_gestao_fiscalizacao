@@ -1,8 +1,6 @@
-// CÓDIGO COMPLETO PARA: screens/occurrence_detail_screen.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart'; // Import do novo pacote de áudio
+import 'package:just_audio/just_audio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -16,9 +14,7 @@ class OccurrenceDetailScreen extends StatefulWidget {
 }
 
 class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
-  // Controller para o vídeo
   VideoPlayerController? _videoController;
-  // NOVO: Player para o áudio
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
@@ -27,15 +23,13 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
     final String? videoPath = widget.ocorrencia['video_path'];
     final String? audioPath = widget.ocorrencia['audio_path'];
 
-    // Inicializa o controller do vídeo, se houver um vídeo
     if (videoPath != null) {
       _videoController = VideoPlayerController.file(File(videoPath))
         ..initialize().then((_) {
-          setState(() {}); // Redesenha a tela quando o vídeo estiver pronto
+          setState(() {});
         });
     }
 
-    // Prepara o player de áudio, se houver um áudio
     if (audioPath != null) {
       _audioPlayer.setFilePath(audioPath);
     }
@@ -43,16 +37,21 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
 
   @override
   void dispose() {
-    // Dispensa ambos os controllers para liberar recursos
     _videoController?.dispose();
     _audioPlayer.dispose();
     super.dispose();
   }
 
+  // A MUDANÇA ESTÁ AQUI: Função _abrirMapa corrigida
   Future<void> _abrirMapa(double lat, double lon) async {
     final Uri url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lon');
-    if (!await launchUrl(url)) {
-      throw Exception('Não foi possível abrir o mapa: $url');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      // Se não conseguir abrir, mostra uma mensagem de erro
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível abrir o mapa.')),
+        );
+      }
     }
   }
 
