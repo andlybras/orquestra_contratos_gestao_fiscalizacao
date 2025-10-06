@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart'; // Import do novo pacote de compartilhamento
 
 class ReportService {
